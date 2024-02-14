@@ -73,19 +73,22 @@ class Bot_Account(Base):
         target_dic: dict = json.loads(self.targeting_list_dic_json) #load target list
         target_id = random.choice(list(target_dic.keys()))  #select a random target
         #load its followers(optimize)
-        instalog.talk(f'Tring to get a follower list (max: {str(self.instagrapi_max_list_query)}) from @{target_dic[target_id]}')
+        instalog.talk(f'Trying to get a follower list (max: {str(self.instagrapi_max_list_query)}) from @{target_dic[target_id]}')
         try:
-            foreign_followers = self.client.user_followers(target_id,amount=self.instagrapi_max_list_query)
+            follower_object_list = self.client.user_followers_v1(target_id,amount=self.instagrapi_max_list_query)
         except Exception as e:
             instalog.talk(e)
             return 404
-        foreign_keys = foreign_followers.keys()
         #call follow for every follower
-        for follower_id in foreign_keys:
+        for follower in follower_object_list:
+            follower_id = follower.pk
+            if follower_id in local_following_dict:
+                instalog.talk(f'Skipping @{local_following_dict[follower_id]}, was already in following list')
+                continue
             result = self.follow(follower_id,local_following_dict)
             ctimer.wait(self.wait_after_click)
             if result:
-                return
+                return result
 
     def unfollow_mass_followed(self)->int:
         '''Unfollows all the people you have followed using the follow_mass_by_target() method'''
@@ -196,7 +199,7 @@ class Bot_Account(Base):
             return
         except Exception as e:
             instalog.talk(e)
-            return
+            return 12
         
         #save stats
         if(unfollowed):
@@ -223,7 +226,7 @@ class Bot_Account(Base):
             return
         except Exception as e:
             instalog.talk(e)
-            return
+            return 12
         #save stats
         if(followed):
             self.stats_followed(user_id,user_name,local_following_dict)
@@ -284,7 +287,7 @@ class Bot_Account(Base):
         try:
             text = f'Trying to get @{user_name}\'s account id.'
             print(text)
-            user_id = self.client.user_id_from_username(user_name)
+            user_id = self.client.user_info_by_username_v1(user_name).pk
         except Exception as e:
             instalog.talk(f'An error ocurred: {e}')
             return
