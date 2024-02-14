@@ -1,6 +1,5 @@
 #manages the bots
 import config
-from seleniumbase import SB
 from time import sleep
 import datetime
 from bot_class import *
@@ -26,7 +25,7 @@ class Controller():
 
         if not hasattr(user,"client"):
             user.startClient()
-
+        
         #perform actions
         act_result=0
         if forced:

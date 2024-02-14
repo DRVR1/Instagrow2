@@ -220,6 +220,10 @@ def menu_manage_accounts(back_username:str=False,back_username_op:int=False):
         menu_manage_accounts(user.username)
 
     elif op == 10: #Follow by target
+        if len(json.loads(user.targeting_list_dic_json))<=0:
+            print('No targets were configured. Please add at least one.')
+            input('Continue')
+            return
         controller.start(user.username, user.password, 2)
         menu_manage_accounts(user.username)
 

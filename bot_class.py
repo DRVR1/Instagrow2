@@ -4,21 +4,14 @@ import instagrapi
 import random
 from instagrapi.exceptions import LoginRequired
 import datetime
-from datetime import timedelta
-from seleniumbase import Driver
-from seleniumbase.fixtures import xpath_to_css
 from sqlalchemy import create_engine, Column, Integer, String, Float,Column, DateTime, Integer,Boolean
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import func
-import os
 from sqlalchemy.ext.declarative import declarative_base
 import config
 import json
 import ctimer
 import instalog
 
-loginurl = config.loginurl
-instaUrl = config.userUrl
 
 Base = declarative_base()
 
@@ -51,6 +44,7 @@ class Bot_Account(Base):
     def startClient(self,proxy=False):
         instalog.talk('Starting client...')
         self.client = instagrapi.Client()
+        ctimer.wait(4,reason='client')
         instalog.talk(f'Client is {self.client}')
         self.login()
         
@@ -69,7 +63,7 @@ class Bot_Account(Base):
         result=0
         for user_id in user_ids:
             result = self.unfollow(user_id,local_following_dict)
-            ctimer.wait(self,self.wait_after_click)
+            ctimer.wait(self.wait_after_click)
             if result:
                 return result
         return result
@@ -91,7 +85,7 @@ class Bot_Account(Base):
         #call follow for every follower
         for follower_id in foreign_keys:
             result = self.follow(follower_id,local_following_dict)
-            ctimer.wait(self,self.wait_after_click)
+            ctimer.wait(self.wait_after_click)
             if result:
                 return
 
@@ -102,7 +96,7 @@ class Bot_Account(Base):
         #call unfollow for every follower
         for user_id in user_ids:
             result = self.unfollow(user_id,local_following_dict)
-            ctimer.wait(self,self.wait_after_click,reason='Cooldown')
+            ctimer.wait(self.wait_after_click,reason='Cooldown')
             if result:
                 return result
 
@@ -115,56 +109,43 @@ class Bot_Account(Base):
 
         session=''
         try:
-            pass
             #session = self.client.load_settings(f'{config.instagrapi_settings_path}.{self.username}')
+            pass
         except:
             instalog.talk('No stored session found, trying via username and password.')
-            pass
 
-        login_via_session = False
-        login_via_pw = False
-
+        logedin =False
         if session:
             try:
-                self.client.set_settings(session)
-                self.client.login(self.username,self.password)
-
-                # check if session is valid
+                instalog.talk('Stored session found, trying to log in.')
+                self.client.login_by_sessionid(session["authorization_data"]["sessionid"])
                 try:
                     self.client.get_timeline_feed()
+                    logedin = True
                 except LoginRequired:
                     instalog.talk("Session is invalid, need to login via username and password")
-
-                    old_session = self.client.get_settings()
-
-                    # use the same device uuids across logins
-                    self.client.set_settings({})
-                    self.client.set_uuids(old_session["uuids"])
-
-                    self.client.login(self.username, self.password)
-                login_via_session = True
             except Exception as e:
                 instalog.talk("Couldn't login user using session information: %s" % e)
-
-        if not login_via_session:
+        if not logedin:
             try:
-                instalog.talk("Attempting to login via username and password. username: %s" % self.username)
-                if self.client.login(self.username, self.password):
-                    login_via_pw = True
-            except Exception as e:
-                instalog.talk("Couldn't login user using username and password: %s" % e)
-                return 100
-
-        if not login_via_pw and not login_via_session:
-            instalog.talk("Couldn't login user with either password or session")
-            return 100
-        
-        self.client.dump_settings(f'{config.instagrapi_settings_path}.{self.username}')
-        instalog.talk('Logged in.')
-        now = datetime.datetime.now()
-        self.last_login = now
-        self.logins+=1
-        self.saveInstance()
+                self.client.login(self.username,self.password)
+                try:
+                    self.client.get_timeline_feed()
+                    logedin=True
+                except:
+                    instalog.talk('Invalid login.')
+                    return
+            except:
+                instalog.talk('Error while trying to log in.')
+                return
+        if logedin:
+            ctimer.wait(324,reason='login')
+            self.client.dump_settings(f'{config.instagrapi_settings_path}.{self.username}')
+            instalog.talk('Logged in.')
+            now = datetime.datetime.now()
+            self.last_login = now
+            self.logins+=1
+            self.saveInstance()
         
     def unfollow(self,user_id,local_following_dict:dict): #since the program cannot detect if the user accepted the follow request, try both cases.
         #checks if user can perform actions
@@ -176,6 +157,10 @@ class Bot_Account(Base):
         unfollowed=False
         try:
             unfollowed=self.client.user_unfollow(user_id)
+        except LoginRequired as e:
+            instalog.talk(e)
+            self.login()
+            return
         except Exception as e:
             instalog.talk(e)
             return
@@ -199,9 +184,13 @@ class Bot_Account(Base):
         try:
             followed = self.client.user_follow(user_id)
             followed=True
+        except LoginRequired as e:
+            instalog.talk(e)
+            self.login()
+            return
         except Exception as e:
-            instalog.talk(f'Error following: {e}')
-            return 123
+            instalog.talk(e)
+            return
         #save stats
         if(followed):
             self.stats_followed(user_id,user_name,local_following_dict)
@@ -264,6 +253,7 @@ class Bot_Account(Base):
 
         try:
             text = f'Trying to get @{user_name}\'s account id.'
+            print(text)
             user_id = self.client.user_id_from_username(user_name)
         except Exception as e:
             instalog.talk(f'An error ocurred: {e}')
