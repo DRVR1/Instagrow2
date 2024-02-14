@@ -2,7 +2,7 @@
 from time import sleep
 import instagrapi
 import random
-from instagrapi.exceptions import LoginRequired
+from instagrapi.exceptions import LoginRequired, PleaseWaitFewMinutes
 import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Float,Column, DateTime, Integer,Boolean
 from sqlalchemy.orm import sessionmaker
@@ -97,7 +97,7 @@ class Bot_Account(Base):
         #call unfollow for every follower
         for user_id in user_ids:
             result = self.unfollow(user_id,local_following_dict)
-            ctimer.wait(self.wait_after_click,reason='Cooldown')
+            ctimer.wait(self.wait_after_click)
             if result:
                 return result
 
@@ -158,6 +158,8 @@ class Bot_Account(Base):
                     self.client.set_uuids(old_session["uuids"])
 
                     self.client.login(self.username, self.password)
+                    self.check_login()
+
                 login_via_session = True
             except Exception as e:
                 instalog.talk("Couldn't login user using session information: %s" % e)
@@ -166,6 +168,7 @@ class Bot_Account(Base):
             try:
                 instalog.talk("Attempting to login via username and password. username: %s" % self.username)
                 if self.client.login(self.username, self.password):
+                    self.check_login()
                     login_via_pw = True
             except Exception as e:
                 instalog.talk("Couldn't login user using username and password: %s" % e)
@@ -195,10 +198,15 @@ class Bot_Account(Base):
             unfollowed=self.client.user_unfollow(user_id)
         except LoginRequired as e:
             instalog.talk(e)
+            result = self.login()
+            return result
+        except PleaseWaitFewMinutes as e:
+            instalog.talk(f'Handled exception: {e}\ntrying to re-login')
+            self.client.logout()
             self.login()
             return
         except Exception as e:
-            instalog.talk(e)
+            instalog.talk(f'Unhandled exception: {e}')
             return 12
         
         #save stats
@@ -222,10 +230,15 @@ class Bot_Account(Base):
             followed=True
         except LoginRequired as e:
             instalog.talk(e)
+            result = self.login()
+            return result
+        except PleaseWaitFewMinutes as e:
+            instalog.talk(f'Handled exception: {e}\ntrying to re-login')
+            self.client.logout()
             self.login()
             return
         except Exception as e:
-            instalog.talk(e)
+            instalog.talk(f'Unhandled exception: {e}')
             return 12
         #save stats
         if(followed):
