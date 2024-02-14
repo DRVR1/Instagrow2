@@ -20,34 +20,33 @@ class Controller():
         if forced, it means the bot was started via scheduler
         '''
 
-        #load bot and start instagrapi client
         user = self.add_load_bot(username,password)
 
-        if not hasattr(user,"client"):
-            user.startClient()
-        
-        #perform actions
-        act_result=0
-        if forced:
-            user.scheduled = True
-        if option==1:
-            act_result = user.unfollow_mass()
-        elif option==2:
-            act_result = user.follow_mass_by_target()
-        elif option==3:
-            act_result = user.unfollow_mass_followed()
+        result = user.login()
 
-        #check outputs
-        if(act_result==100):
-            instalog.talk('Elements not found, maybe the list is empty?')
-        elif(act_result==200):
-            instalog.talk('Action limit per day reached. You can change this value in the account configuration (not recomended for new accounts).')
-        elif(act_result==15):
-            instalog.talk('Task finished. You have unfollowed everyone who were followed by this app.')
-        elif(act_result==300):
-            instalog.talk('Reached the target scheduled tasks.')
-        elif(act_result==404):
-            instalog.talk('Error locating elements, please wait for an update')
+        if not result:
+            #perform actions
+            act_result=0
+            if forced:
+                user.scheduled = True
+            if option==1:
+                act_result = user.unfollow_mass()
+            elif option==2:
+                act_result = user.follow_mass_by_target()
+            elif option==3:
+                act_result = user.unfollow_mass_followed()
+
+            #check outputs
+            if(act_result==100):
+                instalog.talk('Elements not found, maybe the list is empty?')
+            elif(act_result==200):
+                instalog.talk('Action limit per day reached. You can change this value in the account configuration (not recomended for new accounts).')
+            elif(act_result==15):
+                instalog.talk('Task finished. You have unfollowed everyone who were followed by this app.')
+            elif(act_result==300):
+                instalog.talk('Reached the target scheduled tasks.')
+            elif(act_result==404):
+                instalog.talk('Error locating elements, please wait for an update')
 
         input('Continue')
 

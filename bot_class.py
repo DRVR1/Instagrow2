@@ -41,12 +41,10 @@ class Bot_Account(Base):
     def saveInstance(self):
         session.commit()
 
-    def startClient(self,proxy=False):
+    def startClient(self):
         instalog.talk('Starting client...')
         self.client = instagrapi.Client()
-        ctimer.wait(4,reason='client')
         instalog.talk(f'Client is {self.client}')
-        self.login()
         
     def unfollow_mass(self)->int:
         '''Mass unfollows all your followings'''
@@ -100,54 +98,89 @@ class Bot_Account(Base):
             if result:
                 return result
 
+    def check_login(self)->bool:
+        instalog.talk('Checking login...')
+        logedin = False
+        if not hasattr(self,"client"):
+            instalog.talk('No client was started..')
+            return logedin
+        try:
+            self.client.get_timeline_feed()
+            instalog.talk('Login confirmed...')
+            logedin = True
+        except:
+            instalog.talk('Not loged in...')
+            logedin = False
+
+        return logedin
+
+        
     def login(self):
         """
         Attempts to login to Instagram using either the provided session information
         or the provided username and password.
         """
+        if not hasattr(self,"client"):
+            self.startClient()
+        else: #if a session was already created, it is worth checking if the user was loged in
+            if self.check_login():
+                return
+            
         instalog.talk(f'Trying to login into {self.username}')
 
         session=''
         try:
-            #session = self.client.load_settings(f'{config.instagrapi_settings_path}.{self.username}')
-            pass
+            session = self.client.load_settings(f'{config.instagrapi_settings_path}.{self.username}')
+            instalog.talk('Stored session found, reusing session...')
         except:
             instalog.talk('No stored session found, trying via username and password.')
+            pass
 
-        logedin =False
+        login_via_session = False
+        login_via_pw = False
+
         if session:
             try:
-                instalog.talk('Stored session found, trying to log in.')
-                self.client.login_by_sessionid(session["authorization_data"]["sessionid"])
-                try:
-                    self.client.get_timeline_feed()
-                    logedin = True
-                except LoginRequired:
+                self.client.set_settings(session)
+                self.client.login(self.username,self.password)
+
+                # check if session is valid
+                if not self.check_login():
                     instalog.talk("Session is invalid, need to login via username and password")
+                    
+                    old_session = self.client.get_settings()
+
+                    # use the same device uuids across logins
+                    self.client.set_settings({})
+                    self.client.set_uuids(old_session["uuids"])
+
+                    self.client.login(self.username, self.password)
+                login_via_session = True
             except Exception as e:
                 instalog.talk("Couldn't login user using session information: %s" % e)
-        if not logedin:
+
+        if not login_via_session:
             try:
-                self.client.login(self.username,self.password)
-                try:
-                    self.client.get_timeline_feed()
-                    logedin=True
-                except:
-                    instalog.talk('Invalid login.')
-                    return
-            except:
-                instalog.talk('Error while trying to log in.')
-                return
-        if logedin:
-            ctimer.wait(324,reason='login')
-            self.client.dump_settings(f'{config.instagrapi_settings_path}.{self.username}')
-            instalog.talk('Logged in.')
-            now = datetime.datetime.now()
-            self.last_login = now
-            self.logins+=1
-            self.saveInstance()
+                instalog.talk("Attempting to login via username and password. username: %s" % self.username)
+                if self.client.login(self.username, self.password):
+                    login_via_pw = True
+            except Exception as e:
+                instalog.talk("Couldn't login user using username and password: %s" % e)
+                return 100
+
+        if not login_via_pw and not login_via_session:
+            instalog.talk("Couldn't login user with either password or session")
+            return 100
         
-    def unfollow(self,user_id,local_following_dict:dict): #since the program cannot detect if the user accepted the follow request, try both cases.
+        self.client.dump_settings(f'{config.instagrapi_settings_path}.{self.username}')
+        now = datetime.datetime.now()
+        self.last_login = now
+        self.logins+=1
+        self.saveInstance()
+
+
+    def unfollow(self,user_id,local_following_dict:dict): 
+        '''Unfollows the selected user'''
         #checks if user can perform actions
         if not ctimer.check_avaliable(self):
             return 200
@@ -204,7 +237,7 @@ class Bot_Account(Base):
         self.saveInstance()
 
     def stats_unfollowed(self,userId:str,username:str,local_following_dict:dict):
-        '''Removes user from following list, also changes the corresponding stats'''
+        '''Removes @user from the local following list, also changes the corresponding stats (total unfollowed, etc...)'''
         self.stats_remove_token()
         self.total_unfollowed+=1
         if hasattr(self,"scheduled"):
@@ -220,7 +253,7 @@ class Bot_Account(Base):
         self.saveInstance()
 
     def stats_followed(self,userId:str,username:str,local_following_dict:dict):
-        '''Adds user to following dic, also changes the corresponding stats'''
+        '''Adds @user to the local following list, also changes the corresponding stats (total followed, etc...)'''
         self.stats_remove_token()
         self.total_followed+=1
         if hasattr(self,"scheduled"):
@@ -244,13 +277,10 @@ class Bot_Account(Base):
             instalog.talk(f'Error trying to remove {username} from targeting list.')
         
     def target_add(self,user_name:str):
-        if not hasattr(self,"client"):
-            instalog.talk('Login is required')
-            self.startClient()
-            
-        else:
-            instalog.talk(f'Reusing session {self.client}')
-
+        if not self.check_login():
+            result = self.login()
+            if result:
+                return
         try:
             text = f'Trying to get @{user_name}\'s account id.'
             print(text)
