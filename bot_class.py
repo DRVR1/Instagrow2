@@ -11,11 +11,13 @@ import config
 import json
 import ctimer
 import instalog
+import iexceptions
 
 
 Base = declarative_base()
 
 class Bot_Account(Base):
+    '''Wraps instagrapi methods into a database'''
     __tablename__='bots'
     id = Column(Integer, primary_key=True)
     username = Column(String)
@@ -39,14 +41,22 @@ class Bot_Account(Base):
     instagrapi_max_list_query = Column(Integer) #limit the followers/following ammount retrieved from instagram (for safety)
 
     def saveInstance(self):
+        '''Save sql instance'''
         session.commit()
 
     def startClient(self):
+        '''Start instagrapi client'''
         instalog.talk('Starting client...')
         self.client = instagrapi.Client()
         instalog.talk(f'Client is {self.client}')
-        
-    def unfollow_mass(self)->int:
+    
+    def scrape_followers(self):
+        pass
+
+    def scrape_following(self):
+        pass
+
+    def unfollow_mass(self,userids:list)->int:
         '''Mass unfollows all your followings'''
         local_following_dict = json.loads(self.following_list_dic_json) 
         instalog.talk('Getting following list...')
@@ -65,18 +75,18 @@ class Bot_Account(Base):
             if result:
                 return result
         return result
-            
-    def follow_mass_by_target(self)->int:
+
+    def follow_mass(self,userids:list)->int:
         '''Selects a random user from your targets list and starts following its followers'''
         local_following_dict = json.loads(self.following_list_dic_json) 
         #find random target
         target_dic: dict = json.loads(self.targeting_list_dic_json) #load target list
         target_id = random.choice(list(target_dic.keys()))  #select a random target
         #load its followers(optimize)
-        instalog.talk(f'Trying to get a follower list (max: {str(self.instagrapi_max_list_query)}) from @{target_dic[target_id]}')
+        instalog.talk(f'Trying to get followers list (max: {str(self.instagrapi_max_list_query)}) from @{target_dic[target_id]}')
         while True:
             try:
-                follower_object_list = self.client.user_followers_v1(target_id,amount=self.instagrapi_max_list_query)
+                follower_object_list = self.client.user_followers_v1_chunk(target_id,amount=self.instagrapi_max_list_query)
                 break
             except PleaseWaitFewMinutes as e:
                 instalog.talk(f'Handled exception: {e}\ntrying to re-login')
@@ -108,6 +118,7 @@ class Bot_Account(Base):
                 return result
 
     def check_login(self)->bool:
+        '''Check if self is logged in'''
         instalog.talk('Checking login...')
         logedin = False
         if not hasattr(self,"client"):
@@ -203,17 +214,11 @@ class Bot_Account(Base):
         try:
             unfollowed=self.client.user_unfollow(user_id)
         except LoginRequired as e:
-            instalog.talk(e)
-            result = self.login()
-            return result
+            return iexceptions.loginrequired(self,e)
         except PleaseWaitFewMinutes as e:
-            instalog.talk(f'Handled exception: {e}\ntrying to re-login')
-            self.client.logout()
-            self.login()
-            return
+            return iexceptions.PleaseWaitFewMinutes(self,e)
         except Exception as e:
-            instalog.talk(f'Unhandled exception: {e}')
-            return 1
+            return iexceptions.unhandled(e)
         
         #save stats
         if(unfollowed):
@@ -235,17 +240,12 @@ class Bot_Account(Base):
             followed = self.client.user_follow(user_id)
             followed=True
         except LoginRequired as e:
-            instalog.talk(e)
-            result = self.login()
-            return result
+            return iexceptions.loginrequired(self,e)
         except PleaseWaitFewMinutes as e:
-            instalog.talk(f'Handled exception: {e}\ntrying to re-login')
-            self.client.logout()
-            self.login()
-            return
+            return iexceptions.PleaseWaitFewMinutes(self,e)
         except Exception as e:
-            instalog.talk(f'Unhandled exception: {e}')
-            return 12
+            return iexceptions.unhandled(e)
+        
         #save stats
         if(followed):
             self.stats_followed(user_id,user_name,local_following_dict)

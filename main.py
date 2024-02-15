@@ -78,7 +78,7 @@ def menu_manage_accounts(back_username:str=False,back_username_op:int=False):
     9. Mass unfollow everyone, including your friends  
     10. Mass follow (by target)
     11. Mass unfollow (followed by using this app)
-    12. Configure automatic actions [{str(user.scheduled_enabled)}]\n
+    12. Configure automatic actions [{str(user.scheduled_enabled)}] (coming soon)\n
     |-------|Configuration (Warning)|-------|
     99. Delete'''
     text9='    0. Back'
@@ -232,6 +232,8 @@ def menu_manage_accounts(back_username:str=False,back_username_op:int=False):
         menu_manage_accounts(user.username)
 
     elif op == 12: #configure automatic actions
+        menu_manage_accounts(user.username)
+
         print('Automatic actions configuration.')
         info=f'''
 Account info:
@@ -328,8 +330,8 @@ def menu():
     text='''          
     1. Add account
     2. Manage accounts
-    3. Enable autostartup
-    4. Disable autostartup
+    3. Enable autostartup (coming soon)
+    4. Disable autostartup (coming soon)
     0. Exit'''
     print(text)
     op=0
@@ -342,12 +344,12 @@ def menu():
     if (op == 2):
         menu_manage_accounts()
     if (op==3):
-        controller.windows_create_autostartup()
-        input('continue')
+        #controller.windows_create_autostartup()
+        #input('continue')
         menu()
     if (op==4):
-        controller.windows_remove_autostartup()
-        input('continue')
+        #controller.windows_remove_autostartup()
+        #input('continue')
         menu()
     if (op ==0):
         exit()
