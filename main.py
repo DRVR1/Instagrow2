@@ -322,7 +322,7 @@ def menu():
         print(f'Startup folder: {config.get_startup_folder()}')
         print(f'Executing from: {config.get_running_path()}')
     print("Welcome.")
-    print('Remember to disable 2FA (two factor autentication), otherwise, automation won\'t work.\n')
+    print('Remember: your account must be verified with phone number to avoid blocking. Also 2FA (two factor autentication) has to be disabled in order for this script to work.')
     print(f'All your data will be saved in: \n{config.db_file_path}')
     
     text='''          
