@@ -74,11 +74,17 @@ class Bot_Account(Base):
         target_id = random.choice(list(target_dic.keys()))  #select a random target
         #load its followers(optimize)
         instalog.talk(f'Trying to get a follower list (max: {str(self.instagrapi_max_list_query)}) from @{target_dic[target_id]}')
-        try:
-            follower_object_list = self.client.user_followers_v1(target_id,amount=self.instagrapi_max_list_query)
-        except Exception as e:
-            instalog.talk(e)
-            return 404
+        while True:
+            try:
+                follower_object_list = self.client.user_followers_v1(target_id,amount=self.instagrapi_max_list_query)
+                break
+            except PleaseWaitFewMinutes as e:
+                instalog.talk(f'Handled exception: {e}\ntrying to re-login')
+                self.client.logout()
+                self.login()
+            except Exception as e:
+                instalog.talk(f'Unhandled exception: {e}')
+                return 1
         #call follow for every follower
         for follower in follower_object_list:
             follower_id = follower.pk
@@ -207,7 +213,7 @@ class Bot_Account(Base):
             return
         except Exception as e:
             instalog.talk(f'Unhandled exception: {e}')
-            return 12
+            return 1
         
         #save stats
         if(unfollowed):
