@@ -1,10 +1,15 @@
-#time related functions
-
+'''
+Description:
+    Time related functions
+'''
+# Default modules
 import datetime
 from datetime import timedelta
 import random
-import instalog
 from time import sleep
+
+# Custom modules
+import instalog
 
 def time_hasPassed(waitUntil,hours=0,seconds=0)->bool:
     '''Specify a Bot object (self), and the time that should have passed from (waitUntil) to return true'''
@@ -32,20 +37,20 @@ def time_hasPassed(waitUntil,hours=0,seconds=0)->bool:
 
 def check_avaliable(bot)->bool:
     '''Checks if the bot can work again after running out of tokens by checking how much time has passed since then'''
-    if bot.tokens<=0 and bot.avaliable:
-        bot.avaliable=False
-        new_time =  datetime.datetime.now() + timedelta(seconds=bot.actions_rest_time)
-        bot.waitUntil = new_time.strftime("%H:%M:%S - %d %B %Y")
+    if bot.stats_tokens<=0 and bot.config_avaliable:
+        bot.config_avaliable=False
+        new_time =  datetime.datetime.now() + timedelta(seconds=bot.config_actions_rest_time)
+        bot.config_waitUntil = new_time.strftime("%H:%M:%S - %d %B %Y")
         current_timestamp = datetime.datetime.now()
-        bot.waitUntil = current_timestamp
+        bot.config_waitUntil = current_timestamp
         bot.saveInstance()
         return False
-    if time_hasPassed(bot.waitUntil,seconds=bot.actions_rest_time) and not bot.avaliable:
-        bot.tokens=bot.actions_per_day
-        bot.avaliable = True
+    if time_hasPassed(bot.config_waitUntil,seconds=bot.config_actions_rest_time) and not bot.config_avaliable:
+        bot.stats_tokens=bot.config_actions_per_day
+        bot.config_avaliable = True
         bot.saveInstance()
         return True
-    if not bot.avaliable:
+    if not bot.config_avaliable:
         return False
     return True
 

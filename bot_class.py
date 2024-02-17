@@ -1,12 +1,25 @@
-#bot class
-from time import sleep
-import instagrapi
-import random
-from instagrapi.exceptions import LoginRequired, PleaseWaitFewMinutes
+'''
+Description:
+    Bot methods and attributes.
+    The bot wraps instagrapi functions,
+    handles exceptions, and stores its own
+    attributes in a database.
+'''
+
+#default modules
 import datetime
+import functools
+from math import ceil
+
+#downloaded modules
+import instagrapi
 from sqlalchemy import create_engine, Column, Integer, String, Float,Column, DateTime, Integer,Boolean
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from instagrapi.exceptions import LoginRequired, PleaseWaitFewMinutes, ChallengeRequired, FeedbackRequired
+from instagrapi.types import User, UserShort
+
+#custom modules
 import config
 import json
 import ctimer
@@ -14,108 +27,143 @@ import instalog
 import iexceptions
 
 
+# Define paths/strings
+dataBase_path = config.db_file_path # Example: somefolder/myDatabase.db
+
+
+# Define database instance
 Base = declarative_base()
 
+
+#Bot class definition (attributes and methods)
 class Bot_Account(Base):
-    '''Wraps instagrapi methods into a database'''
+
     __tablename__='bots'
+
+    '''Attributes section'''
     id = Column(Integer, primary_key=True)
+    # Instagram account
     username = Column(String)
     password = Column(String)
-    logins = Column(Integer)
-    last_login = Column(DateTime)
-    tokens = Column(Integer)#remaining actions in the defined time interval. 
-    waitUntil = Column(DateTime)#The date when the tokens will be restored to actions_per_day value and 'avaliable' will be set to true
-    avaliable = Column(Boolean)#defines if the bot is waiting that time interval.
-    total_followed = Column(Integer)#stats
-    total_unfollowed = Column(Integer)#stats
-    following_list_dic_json = Column(String)#a dictionary {id:username} of the people the user is following with this app
-    targeting_list_dic_json = Column(String)#a dictionary {id:username} of the people whose followers will be followed
-    actions_per_day=Column(Integer) #how much actions per time interval are allowed
-    actions_rest_time=Column(Integer)#wait time interval since you run out of tokens
-    wait_after_click = Column(Float)#how much time the bot waits after clicking a button
+    # Stats 
+    stats_logins = Column(Integer)
+    stats_last_login = Column(DateTime)
+    stats_tokens = Column(Integer)#remaining actions in the defined time interval. 
+    stats_total_followed = Column(Integer)#stats
+    stats_total_unfollowed = Column(Integer)#stats
+    # Bot configuration
+    config_waitUntil = Column(DateTime)#The date when the tokens will be restored to actions_per_day value and 'avaliable' will be set to true
+    config_avaliable = Column(Boolean)#defines if the bot is waiting that time interval.
+    config_actions_per_day=Column(Integer) #how much actions per time interval are allowed
+    config_actions_rest_time=Column(Integer)#wait time interval since you run out of tokens
+    config_wait_after_click = Column(Float)#how much time the bot waits after performing an action (follow/unfollow/like/comment)
+    # Scheduler configuration
     scheduled_enabled = Column(Boolean)#sets automatic actions flag (act when the program starts)
     scheduled_follows = Column(Integer)#sets the total number of account that must be followed
     scheduled_unfollows = Column(Integer)#sets the total number of account that must be unfollowed
     scheduled_unfollows_everyone = Column(Boolean)#a bool that defines wether the scheduled unfollow should look at the following_list_json, or just unfollow everyone
+    # Instagrapi configuration
     instagrapi_max_list_query = Column(Integer) #limit the followers/following ammount retrieved from instagram (for safety)
+    # Instagram interactions
+    automated_followings_ids = Column(String) # List of users id's (serialized json)
+    all_followings_shorts = Column(String) # List of userShort (serialized json)
+    all_followers_shorts = Column(String) # List of userShort (serialized json)
+
+
+    '''Methods section'''
+    def create_load_bot(self,username,password=None)->'Bot_Account':
+        '''Loads selected bot by username. If the bot doesn't exist, then it will be created and saved as a new bot.'''
+        user=session.query(Bot_Account).filter_by(username=username).first()
+        if user == None:
+            # Create new user object
+            '''Creates and saves user. Returns user object after created'''
+            user = Bot_Account(
+                # Instagram account
+                username = username,
+                password = password,
+
+                # Stats 
+                stats_logins = 0,
+                stats_last_login = None,
+                stats_tokens = 200,
+                stats_total_followed = 0,
+                stats_total_unfollowed = 0,
+
+                # Bot configuration
+                config_waitUntil = datetime.datetime.now(),
+                config_avaliable = True,
+                config_actions_per_day = 200,
+                config_actions_rest_time = 3600*24,
+                config_wait_after_click = 0.5,
+
+                # Scheduler configuration
+                scheduled_enabled = False,
+                scheduled_follows = 0,
+                scheduled_unfollows = 0,
+                scheduled_unfollows_everyone = False,
+
+                # Instagrapi configuration
+                instagrapi_max_list_query = 200,
+
+                # Instagram interactions
+                automated_followings_ids = json.dumps([]),
+                all_followings_shorts = json.dumps([]),
+                all_followers_shorts = json.dumps([])
+            )
+            session.add(user)
+            session.commit()
+        return user
+    
+    
+    def delete_bot(self,username:str):
+        '''Deletes bot from database'''
+        user=session.query(Bot_Account).filter_by(username=username).first()
+        if user:
+            session.delete(user)
+            session.commit()
+        else:
+            instalog.error('Error deleting: User ' + username + ' doesn\'t exist')
+
 
     def saveInstance(self):
-        '''Save sql instance'''
+        '''Saves the bot's attributes into the database'''
         session.commit()
 
-    def startClient(self):
-        '''Start instagrapi client'''
+
+    def _startClient(self):
+        '''Starts instagrapi client'''
         instalog.talk('Starting client...')
         self.client = instagrapi.Client()
         instalog.talk(f'Client is {self.client}')
     
-    def scrape_followers(self):
-        pass
 
-    def scrape_following(self):
-        pass
+    def follow_mass(self,accounts:list[UserShort])->bool:
+        '''
+            - Input: list of UserShort (userShort is an instagrapi user object with limited info, commonly obtained by scrapping a followers list)
+            
+            - Logic: Follows everyone on the list
 
-    def unfollow_mass(self,userids:list)->int:
-        '''Mass unfollows all your followings'''
-        local_following_dict = json.loads(self.following_list_dic_json) 
-        instalog.talk('Getting following list...')
-        self_followers_dict={}
-        try:
-            self_followers_dict = self.client.user_following(self.client.user_id,self.instagrapi_max_list_query)
-        except Exception as e:
-            instalog.talk(f'Error getting following list. {e}')
-            return
-        instalog.talk(f'following list size: {str(len(self_followers_dict))}')
-        user_ids = self_followers_dict.keys()
-        result=0
-        for user_id in user_ids:
-            result = self.unfollow(user_id,local_following_dict)
-            ctimer.wait(self.wait_after_click)
-            if result:
-                return result
-        return result
+            - Output: status code
+        '''
+        for user_short in accounts:
+            followed = self.follow(user_id=user_short.pk)
+            if not followed:
+                return False
+            
 
-    def follow_mass(self,userids:list)->int:
-        '''Selects a random user from your targets list and starts following its followers'''
-        local_following_dict = json.loads(self.following_list_dic_json) 
-        #find random target
-        target_dic: dict = json.loads(self.targeting_list_dic_json) #load target list
-        target_id = random.choice(list(target_dic.keys()))  #select a random target
-        #load its followers(optimize)
-        instalog.talk(f'Trying to get followers list (max: {str(self.instagrapi_max_list_query)}) from @{target_dic[target_id]}')
-        while True:
-            try:
-                follower_object_list = self.client.user_followers_v1_chunk(target_id,amount=self.instagrapi_max_list_query)
-                break
-            except PleaseWaitFewMinutes as e:
-                instalog.talk(f'Handled exception: {e}\ntrying to re-login')
-                self.client.logout()
-                self.login()
-            except Exception as e:
-                instalog.talk(f'Unhandled exception: {e}')
-                return 1
-        #call follow for every follower
-        for follower in follower_object_list:
-            follower_id = follower.pk
-            if follower_id in local_following_dict:
-                instalog.talk(f'Skipping @{local_following_dict[follower_id]}, was already in following list')
-                continue
-            result = self.follow(follower_id,local_following_dict)
-            ctimer.wait(self.wait_after_click)
-            if result:
-                return result
+    def unfollow_mass(self,accounts:list[UserShort])->bool:
+        '''
+            - Input: list of UserShort (userShort is an instagrapi user object with limited info, commonly obtained by scrapping a followers list)
+            
+            - Logic: Unfollows everyone on the list
 
-    def unfollow_mass_followed(self)->int:
-        '''Unfollows all the people you have followed using the follow_mass_by_target() method'''
-        local_following_dict = json.loads(self.following_list_dic_json) 
-        user_ids = local_following_dict.keys()
-        #call unfollow for every follower
-        for user_id in user_ids:
-            result = self.unfollow(user_id,local_following_dict)
-            ctimer.wait(self.wait_after_click)
-            if result:
-                return result
+            - Output: status code
+        '''
+        for user_short in accounts:
+            unfollowed = self.unfollow(user_id=user_short.pk)
+            if not unfollowed:
+                return False
+            
 
     def check_login(self)->bool:
         '''Check if self is logged in'''
@@ -134,15 +182,141 @@ class Bot_Account(Base):
 
         return logedin
 
-        
-    def login(self):
+
+    def _action_wrap(action):
+        @functools.wraps(action)  
+        def wrapper(self:'Bot_Account',*args,**kwargs):
+            #check if bot is avaliable
+            if not ctimer.check_avaliable(self):
+                return 200
+            #try to perform action trough instagrapi
+            try:
+                action(self,*args,**kwargs)
+                instalog.talk(f'Action finished. Remaining tokens: [{str(self.stats_tokens)}]')
+            except LoginRequired as e:
+                return iexceptions.loginrequired(self,e)
+            except PleaseWaitFewMinutes as e:
+                return iexceptions.PleaseWaitFewMinutes(self,e)
+            except ChallengeRequired as e:
+                return iexceptions.ChallengeRequired(self,e)
+            except FeedbackRequired as e:
+                return iexceptions.FeedbackRequired(self,e)
+            except Exception as e:
+                return iexceptions.unhandled(e)
+            return True
+        return wrapper
+
+
+    @_action_wrap
+    def scrape_followers(self,*args,user_id:str,chunk_size=190,cursor='',max_followers=400,**kwargs) -> list[UserShort]:
+        '''
+            - chunk_size: ammount of followers to receive per request (max recomended is 200)
+            - cursor: position in the follower list, so you don't request always the same chunk of followers
+            - max_followers: total ammount of followers you request to get
+        '''
+        user_list = []
+        iterations = ceil(max_followers/chunk_size)
+        for _ in range(iterations):
+            userlist, max = self.client.user_followers_v1_chunk(user_id,max_amount=chunk_size,max_id=cursor)
+            cursor = max 
+            # Add obtained followers (UserShort) to the existing list
+            user_list+=userlist 
+        return user_list
+
+
+    @_action_wrap
+    def scrape_following(self,*args,user_id:str,chunk_size=190,cursor='',max_following=400,**kwargs) -> list[UserShort]:
+        '''
+            - chunk_size: ammount of following to receive per request (max recomended is 200)
+            - cursor: position in the following list, so you don't request always the same chunk of following
+            - max_following: total ammount of following you request to get
+        '''
+        user_list = []
+        iterations = ceil(max_following/chunk_size)
+        for _ in range(iterations):
+            userlist, max = self.client.user_following_v1_chunk(user_id,max_amount=chunk_size,max_id=cursor)
+            cursor = max 
+            # Add obtained followers (UserShort) to the existing list
+            user_list+=userlist 
+        return user_list
+
+
+    @_action_wrap
+    def scrape_account_data(self,username:str, Fjson=False)->User:
+        '''
+           - If Fjson = False (default), returns User object
+           - If Fjson = True, returns formated json string
+        '''
+        user_obj = self.client.user_info_by_username_v1(username)
+        if Fjson:
+            dic = user_obj.model_dump()
+            return json.dumps(dic,indent=4,default=str)
+        else:
+            return user_obj
+
+
+    @_action_wrap
+    def follow(self,*args,user_id:str,**kwargs)->bool:
+        '''Follows provided userId'''
+        followed = self.client.user_follow(user_id)
+        if followed:
+            self._register_followed(userId=user_id)
+
+
+    @_action_wrap
+    def unfollow(self,*args,user_id:str,**kwargs)->bool:
+        '''Unfollows provided userId'''
+        unfollowed = self.client.user_unfollow(user_id)
+        if unfollowed:
+            self._register_unfollowed(userId=user_id)
+            
+
+    def _action_stats_wrap(func):
+        @functools.wraps(func) 
+        def wrapper(self:'Bot_Account',*args,**kwargs):
+            self.stats_tokens-=1
+            result = func(self,*args,**kwargs)
+            self.saveInstance()
+        return wrapper
+    
+
+    @_action_stats_wrap
+    def _register_followed(self,*args,**kwargs):
+        '''KWARG_required: (userId:str)'''
+        '''Adds @user to the local following list'''
+        self.stats_total_followed+=1
+        userId=kwargs.get('userId')
+        try:
+            followings_list = list(json.loads(self.automated_followings_ids))
+            followings_list.append(userId)
+            self.automated_followings_ids = json.dumps(followings_list)
+        except:
+            instalog.error(f"Error adding user [{str(userId)}] to automated following list")
+
+
+    @_action_stats_wrap
+    def _register_unfollowed(self,*args,**kwargs):
+        '''KWARG_required: (userId:str)'''
+        '''Removes @user from the local following list'''
+        self.stats_total_unfollowed+=1
+        userId=kwargs.get('userId')
+        try:
+            followings_list = list(json.loads(self.automated_followings_ids))
+            followings_list.remove(userId)
+            self.automated_followings_ids = json.dumps(followings_list)
+        except:
+            instalog.error(f"Error removing user [{str(userId)}] from automated following list")
+
+
+    def login(self) -> bool:
         """
-        Attempts to login to Instagram using either the provided session information
-        or the provided username and password.
+            - Attempts to login to Instagram using either the provided session information
+              or the provided username and password.
         """
+
         if not hasattr(self,"client"):
-            self.startClient()
-        else: #if a session was already created, it is worth checking if the user was loged in
+            self._startClient()
+        else:
             if self.check_login():
                 return
             
@@ -150,7 +324,7 @@ class Bot_Account(Base):
 
         session=''
         try:
-            session = self.client.load_settings(f'{config.instagrapi_settings_path}.{self.username}')
+            session = self.client.load_settings(config.get_instagrapi_settings_path(self.username))
             instalog.talk('Stored session found, reusing session...')
         except:
             instalog.talk('No stored session found, trying via username and password.')
@@ -164,13 +338,12 @@ class Bot_Account(Base):
                 self.client.set_settings(session)
                 self.client.login(self.username,self.password)
 
-                # check if session is valid
+                # Check if session is valid
                 if not self.check_login():
                     instalog.talk("Session is invalid, need to login via username and password")
                     
+                    # Use the same device uuids across logins
                     old_session = self.client.get_settings()
-
-                    # use the same device uuids across logins
                     self.client.set_settings({})
                     self.client.set_uuids(old_session["uuids"])
 
@@ -188,144 +361,23 @@ class Bot_Account(Base):
                     self.check_login()
                     login_via_pw = True
             except Exception as e:
-                instalog.talk("Couldn't login user using username and password: %s" % e)
-                return 100
+                instalog.error("Couldn't login user using username and password: %s" % e)
+                return False
 
         if not login_via_pw and not login_via_session:
-            instalog.talk("Couldn't login user with either password or session")
-            return 100
+            instalog.error("Couldn't login user with either password or session")
+            return False
         
-        self.client.dump_settings(f'{config.instagrapi_settings_path}.{self.username}')
+        self.client.dump_settings(config.get_instagrapi_settings_path(self.username))
         now = datetime.datetime.now()
         self.last_login = now
-        self.logins+=1
+        self.stats_logins+=1
         self.saveInstance()
-
-
-    def unfollow(self,user_id,local_following_dict:dict): 
-        '''Unfollows the selected user'''
-        #checks if user can perform actions
-        if not ctimer.check_avaliable(self):
-            return 200
-
-        #performs unfollow
-        user_name = self.client.username_from_user_id(user_id)
-        unfollowed=False
-        try:
-            unfollowed=self.client.user_unfollow(user_id)
-        except LoginRequired as e:
-            return iexceptions.loginrequired(self,e)
-        except PleaseWaitFewMinutes as e:
-            return iexceptions.PleaseWaitFewMinutes(self,e)
-        except Exception as e:
-            return iexceptions.unhandled(e)
-        
-        #save stats
-        if(unfollowed):
-            self.stats_unfollowed(user_id,user_name,local_following_dict)
-            self.saveInstance()
-        else:
-            instalog.talk(f'Error unfollowing {user_id}')
-            
-
-    def follow(self,user_id,local_following_dict:dict):
-        #checks if user can perform actions
-        if not ctimer.check_avaliable(self):
-            return 200
-        
-        #performs follow
-        user_name = self.client.username_from_user_id(user_id)
-        followed=False
-        try:
-            followed = self.client.user_follow(user_id)
-            followed=True
-        except LoginRequired as e:
-            return iexceptions.loginrequired(self,e)
-        except PleaseWaitFewMinutes as e:
-            return iexceptions.PleaseWaitFewMinutes(self,e)
-        except Exception as e:
-            return iexceptions.unhandled(e)
-        
-        #save stats
-        if(followed):
-            self.stats_followed(user_id,user_name,local_following_dict)
-            self.saveInstance()
-        else:
-            instalog.talk(f'Error following {user_id}')
-
-    def stats_remove_token(self):
-        '''Substracts a token from the bot'''
-        self.tokens-=1
-        self.saveInstance()
-
-    def stats_unfollowed(self,userId:str,username:str,local_following_dict:dict):
-        '''Removes @user from the local following list, also changes the corresponding stats (total unfollowed, etc...)'''
-        self.stats_remove_token()
-        self.total_unfollowed+=1
-        if hasattr(self,"scheduled"):
-            if(self.scheduled):
-                self.scheduled_unfollows-=1
-        instalog.talk(f'Remaining actions: {str(self.tokens)}, unfollowed {username}')
-        try:
-            new_dic = dict(local_following_dict)
-            new_dic.pop(userId)
-            self.following_list_dic_json = json.dumps(new_dic)
-        except:
-            instalog.talk(f'Error removing {username} from the local following list.')
-        self.saveInstance()
-
-    def stats_followed(self,userId:str,username:str,local_following_dict:dict):
-        '''Adds @user to the local following list, also changes the corresponding stats (total followed, etc...)'''
-        self.stats_remove_token()
-        self.total_followed+=1
-        if hasattr(self,"scheduled"):
-            if(self.scheduled):
-                self.scheduled_follows-=1
-        instalog.talk(f'Remaining actions: {str(self.tokens)}, followed {username}')
-
-        local_following_dict[userId] = username
-        self.following_list_dic_json = json.dumps(local_following_dict)
-        self.saveInstance()
-
-    def target_remove(self,user_id:str):
-        target_dic: dict = json.loads(self.targeting_list_dic_json) #load target list
-        username = target_dic[user_id]
-        try:
-            target_dic.pop(user_id)
-            self.targeting_list_dic_json = json.dumps(target_dic)
-            instalog.talk(f'Removed {username} from targeting list.')
-            self.saveInstance()
-        except:
-            instalog.talk(f'Error trying to remove {username} from targeting list.')
-        
-    def target_add(self,user_name:str):
-        if not self.check_login():
-            result = self.login()
-            if result:
-                return
-        try:
-            text = f'Trying to get @{user_name}\'s account id.'
-            print(text)
-            user_id = self.client.user_info_by_username_v1(user_name).pk
-        except Exception as e:
-            instalog.talk(f'An error ocurred: {e}')
-            return
-        if not user_id:
-            instalog.talk(f'Error obtaining the user_id for @{user_name}.')
-            return
-        target_dic: dict = json.loads(self.targeting_list_dic_json) #load target list
-        try:
-            target_dic[user_id] = user_name
-            self.targeting_list_dic_json = json.dumps(target_dic)
-            instalog.talk(f'Added user {user_id} to targeting list.')
-            self.saveInstance()
-        except:
-            instalog.talk(f'Error trying to add {user_id} to targeting list.')
-
+        return True
 
 
 # Create the SQLAlchemy engine
-engine = create_engine(f'sqlite:///{config.db_file_path}')
+engine = create_engine(f'sqlite:///{dataBase_path}')
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
