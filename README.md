@@ -34,6 +34,7 @@ The misuse of this software can lead to the temporary or permanent blocking of y
 - Using an old account
 - Waiting a reasonable time between following/posting/etc
 - Loging in with a sessionID
+- Changing the file ./src/default_settings.py" with your own device settings (more info in ./examples)
 
 As you can see, some measures depend completely on you. This app is configured by default with the safests measures, according to the [instagrapi documentation](https://subzeroid.github.io/instagrapi/usage-guide/best-practices.html), also your sessionID will be automatically saved.
 
