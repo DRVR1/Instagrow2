@@ -12,6 +12,8 @@ from bot_class import Bot_Account
 
 helper = menuHelper.Menu_Helper()
 
+def continue_func():
+    input('Continue')
 
 def main():
     op = helper.menu_main()
@@ -42,7 +44,7 @@ def configure_bot(bot:'Bot_Account'):
             configure_bot(bot)
         elif op == 3:
             print(helper.get_bot_info(bot))
-            input('Continue')
+            continue_func()
             configure_bot(bot)
         elif op == 4:
             helper.configure_daily_limit(bot)
@@ -51,16 +53,25 @@ def configure_bot(bot:'Bot_Account'):
             helper.configure_wait_time(bot)
             configure_bot(bot)
         elif op == 7:
-            helper.scrape_followers_by_username(bot)
+            result = helper.scrape_followers_by_username(bot)
+            if not result:
+                continue_func()
             configure_bot(bot)
         elif op == 8:
-            helper.scrape_followings_by_username(bot)
+            result = helper.scrape_followings_by_username(bot)
+            if not result:
+                continue_func()
             configure_bot(bot)
         elif op == 9:
-            helper.scrape_account_info(bot,single=True)
+            result = helper.scrape_account_info(bot,single=True)
+            if not result:
+                continue_func()
             configure_bot(bot)
         elif op == 10:
             helper.mass_follow(bot)
+            configure_bot(bot)
+        elif op == 11:
+            helper.mass_unfollow(bot)
             configure_bot(bot)
         elif op == 99:
             helper.bot_remove(bot.username)
