@@ -13,6 +13,7 @@ from time import sleep
 # Custom modules
 import instalog
 
+
 def time_hasPassed(waitUntil,hours=0,seconds=0)->bool:
     '''Specify a Bot object (self), and the time that should have passed from (waitUntil) to return true'''
     previous_timestamp = waitUntil
@@ -37,6 +38,7 @@ def time_hasPassed(waitUntil,hours=0,seconds=0)->bool:
         print("newtime: Time error. Used multiple time formats")
         return
 
+
 def check_avaliable(bot)->bool:
     '''Checks if the bot can work again after running out of tokens by checking how much time has passed since then'''
     if bot.stats_tokens<=0 and bot.config_avaliable:
@@ -55,6 +57,7 @@ def check_avaliable(bot)->bool:
     if not bot.config_avaliable:
         return False
     return True
+
 
 def wait(time:float,time2:float,reason:str=False) -> None:
     '''

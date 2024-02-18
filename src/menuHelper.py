@@ -66,7 +66,6 @@ class Menu_Helper():
         print("Welcome.")
         print('Remember: your account must be verified with phone number to avoid blocking. Also 2FA (two factor autentication) has to be disabled in order for this script to work.')
         
-        
         text='''          
         1. Add account
         2. Manage accounts

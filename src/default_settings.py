@@ -23,7 +23,11 @@ class default():
             }
     
     user_agent = "Instagram 318.0.0.30.110 Android (34/14.0.0; 450dpi; 1080x2185; samsung; a33x; SM-A336M; arm64-v8a; en_US; A336MUBS7DXA1)"
+    
     country = "US"
+    
     country_code = 1
+    
     locale = "en_US"
+    
     timezone_offset= -10800

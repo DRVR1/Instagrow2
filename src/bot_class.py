@@ -377,6 +377,23 @@ class Bot_Account(Base):
         return logedin
     
 
+    def _default_settings(self):
+        '''Reset bot's instagrapi settings to custom default ones'''
+        self.client.set_settings({})
+        device = default.device_settings
+        agent = default.user_agent
+        country = default.country
+        country_code = default.country_code
+        locale = default.locale
+        timezone_offset = default.timezone_offset
+        self.client.device_settings = device
+        self.client.user_agent = agent
+        self.client.country = country
+        self.client.country_code = country_code
+        self.client.locale = locale
+        self.client.timezone_offset = timezone_offset
+    
+
     def login(self) -> bool:
         """
             - Attempts to login to Instagram using either the provided session information
@@ -399,18 +416,8 @@ class Bot_Account(Base):
             instalog.talk('No stored session found, trying via username and password.')
             if not os.path.exists(config.get_instagrapi_settings_path(self.username)):
                 instalog.talk("Loading custom default settings from 'default_settings.py'")
-                device = default.device_settings
-                agent = default.user_agent
-                country = default.country
-                country_code = default.country_code
-                locale = default.locale
-                timezone_offset = default.timezone_offset
-                self.client.device_settings = device
-                self.client.user_agent = agent
-                self.client.country = country
-                self.client.country_code = country_code
-                self.client.locale = locale
-                self.client.timezone_offset = timezone_offset
+                self._default_settings()
+
                 
         login_via_session = False
         login_via_pw = False
@@ -424,8 +431,7 @@ class Bot_Account(Base):
                 if not self.check_login():
                     instalog.talk("Session is invalid, need to login via username and password")
                     
-                    self.client.sessionid=''
-                    self.client.mid=''
+                    self._default_settings()
                     
                     self.client.login(self.username, self.password)
                     self.check_login()

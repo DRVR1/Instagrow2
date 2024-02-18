@@ -18,6 +18,7 @@ def talk(words):
     except:
         print('Error saving log')
 
+
 def error(words):
     print(words)
     try:
