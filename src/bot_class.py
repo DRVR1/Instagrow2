@@ -408,7 +408,7 @@ class Bot_Account(Base):
             self._startClient()
         else:
             if self.check_login():
-                return
+                return True
             
         instalog.talk(f'Trying to login into {self.username}')
 
