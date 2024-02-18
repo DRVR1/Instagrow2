@@ -266,7 +266,7 @@ class Bot_Account(Base):
 
 
     @_action_wrap
-    def scrape_followers(self,*args,user_id:str,chunk_size=130,cursor='',max_followers=400,**kwargs) -> list[UserShort]:
+    def scrape_followers(self,*args,user_id:str,chunk_size=190,cursor='',max_followers=400,**kwargs) -> list[UserShort]:
         '''
             - chunk_size: ammount of followers to receive per request (max recomended is 200)
             - cursor: position in the follower list, so you don't request always the same chunk of followers
@@ -284,7 +284,7 @@ class Bot_Account(Base):
 
 
     @_action_wrap
-    def scrape_following(self,*args,user_id:str,chunk_size=130,cursor='',max_following=400,**kwargs) -> list[UserShort]:
+    def scrape_following(self,*args,user_id:str,chunk_size=190,cursor='',max_following=400,**kwargs) -> list[UserShort]:
         '''
             - chunk_size: ammount of following to receive per request (max recomended is 200)
             - cursor: position in the following list, so you don't request always the same chunk of following

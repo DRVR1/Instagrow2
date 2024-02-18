@@ -274,7 +274,8 @@ Scheduler activated: {str(bot.scheduled_enabled)}
             else:
                 bot.dump_userList_to_json(shortlist,save_path=savePath)
 
-            input(f'Json saved in {savePath}.\nContinue')
+            instalog.talk(f'Json saved in {savePath}\n')
+            input(f'Continue')
             return True
         return wrapper
     
