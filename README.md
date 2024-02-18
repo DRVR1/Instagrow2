@@ -35,7 +35,7 @@ Since this is a pre-alpha, some functions are not yet avaliable, such as user da
 - Waiting a reasonable time between following/posting/etc
 - Loging in with a sessionID
 
-As you can see, some measures depend completely on you. This app is configured by default with the safests measures, according to the instagrapi documentation, also your sessionID will be automatically saved.
+As you can see, some measures depend completely on you. This app is configured by default with the safests measures, according to the [instagrapi documentation](https://subzeroid.github.io/instagrapi/usage-guide/best-practices.html), also your sessionID will be automatically saved.
 
 ## How to use (options explained)
 
