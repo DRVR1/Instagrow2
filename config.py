@@ -1,5 +1,9 @@
-# Description: Configuration file, contains paths and names that may be used in compilation, or runtime.
+'''
+Author: ian vidmar
 
+Description:
+    Configuration file, contains paths and names that may be used in compilation, or runtime.
+'''
 # Paths being used (windows):
 # - AppData
 # - ProgramFiles
@@ -26,12 +30,22 @@ if not os.path.exists(app_data_dir):
 # Path where the log file is saved (General log, for every bot)
 instagrow_log_path = os.path.join(app_data_dir,'log.txt')
 
+# Path where the scrapped json's will be saved
+instagrow_scrapped_path = os.path.join(app_data_dir,'scrapped')
+if not os.path.exists(instagrow_scrapped_path):
+    os.makedirs(instagrow_scrapped_path)
+
 #Bots database path (bot_class's database)
 db_file_path = os.path.join(app_data_dir, f'{AppName}.UserData.db')
 
+# Path where the scrapped json's will be saved
+instagrow_settings_path = os.path.join(app_data_dir,'settings')
+if not os.path.exists(instagrow_settings_path):
+    os.makedirs(instagrow_settings_path)
+
 # Instagrapi settings path (unique file for each bot) (useragent, device info, etc)
 def get_instagrapi_settings_path(bot_name:str)->str:
-    return os.path.join(app_data_dir,bot_name+'.'+instagrapi_settings_name)
+    return os.path.join(instagrow_settings_path,bot_name+'.'+instagrapi_settings_name)
 
 # Get startup folder where the app settings and databases will be saved
 def get_startup_folder():

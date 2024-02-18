@@ -1,4 +1,6 @@
 '''
+Author: ian vidmar
+
 Description:
     Bot methods and attributes.
     The bot wraps instagrapi functions,
@@ -6,20 +8,21 @@ Description:
     attributes in a database.
 '''
 
-#default modules
+# Default modules
 import datetime
 import functools
 from math import ceil
+from typing import Union
 
-#downloaded modules
+# Downloaded modules
 import instagrapi
 from sqlalchemy import create_engine, Column, Integer, String, Float,Column, DateTime, Integer,Boolean
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from instagrapi.exceptions import LoginRequired, PleaseWaitFewMinutes, ChallengeRequired, FeedbackRequired
+from instagrapi.exceptions import LoginRequired, PleaseWaitFewMinutes, ChallengeRequired, FeedbackRequired, ClientNotFoundError
 from instagrapi.types import User, UserShort
 
-#custom modules
+# Custom modules
 import config
 import json
 import ctimer
@@ -56,7 +59,8 @@ class Bot_Account(Base):
     config_avaliable = Column(Boolean)#defines if the bot is waiting that time interval.
     config_actions_per_day=Column(Integer) #how much actions per time interval are allowed
     config_actions_rest_time=Column(Integer)#wait time interval since you run out of tokens
-    config_wait_after_click = Column(Float)#how much time the bot waits after performing an action (follow/unfollow/like/comment)
+    config_wait_range_1 = Column(Float) # Range start for actions cooldown
+    config_wait_range_2 = Column(Float) # Range end for actions cooldown
     # Scheduler configuration
     scheduled_enabled = Column(Boolean)#sets automatic actions flag (act when the program starts)
     scheduled_follows = Column(Integer)#sets the total number of account that must be followed
@@ -94,7 +98,8 @@ class Bot_Account(Base):
                 config_avaliable = True,
                 config_actions_per_day = 200,
                 config_actions_rest_time = 3600*24,
-                config_wait_after_click = 0.5,
+                config_wait_range_1 = 2,
+                config_wait_range_2 = 4,
 
                 # Scheduler configuration
                 scheduled_enabled = False,
@@ -137,53 +142,96 @@ class Bot_Account(Base):
         instalog.talk(f'Client is {self.client}')
     
 
-    def follow_mass(self,accounts:list[UserShort])->bool:
+    def follow_mass(self,accounts:list[Union[User,UserShort]])->bool:
         '''
-            - Input: list of UserShort (userShort is an instagrapi user object with limited info, commonly obtained by scrapping a followers list)
+            - Input: list of User/Usershort
             
             - Logic: Follows everyone on the list
 
             - Output: status code
         '''
-        for user_short in accounts:
-            followed = self.follow(user_id=user_short.pk)
+        for user in accounts:
+            followed = self.follow(user_id=user.pk)
             if not followed:
                 return False
             
 
-    def unfollow_mass(self,accounts:list[UserShort])->bool:
+    def unfollow_mass(self,accounts:list[Union[User,UserShort]])->bool:
         '''
-            - Input: list of UserShort (userShort is an instagrapi user object with limited info, commonly obtained by scrapping a followers list)
+            - Input: list of User/Usershort
             
             - Logic: Unfollows everyone on the list
 
             - Output: status code
         '''
-        for user_short in accounts:
-            unfollowed = self.unfollow(user_id=user_short.pk)
+        for user in accounts:
+            unfollowed = self.unfollow(user_id=user.pk)
             if not unfollowed:
                 return False
-            
 
-    def check_login(self)->bool:
-        '''Check if self is logged in'''
-        instalog.talk('Checking login...')
-        logedin = False
-        if not hasattr(self,"client"):
-            instalog.talk('No client was started..')
-            return logedin
-        try:
-            self.client.get_timeline_feed()
-            instalog.talk('Login confirmed...')
-            logedin = True
-        except:
-            instalog.talk('Not loged in...')
-            logedin = False
 
-        return logedin
+    def _dump_json_wrap(action):
+        @functools.wraps(action)  
+        def wrapper(self:'Bot_Account',*args,**kwargs):
+            dic_or_diclist = action(self,*args,**kwargs)
+            jsonStr = json.dumps(dic_or_diclist,indent=4,default=str)
+            save_path = kwargs.get('save_path')
+            if save_path:
+                with open(save_path, 'w') as json_file:
+                    json_file.write(jsonStr)
+                    json_file.close()
+            else:
+                return jsonStr
+        return wrapper  
+
+
+    @_dump_json_wrap
+    def dump_user_obj_to_json(self,user:Union[User,UserShort],save_path:str=False) -> dict:
+        '''Converts User or UserShort instagrapi Object into a formatted json string'''
+        return user.model_dump()
+
+
+    @_dump_json_wrap
+    def dump_userList_to_json(self,UserList:list[Union[User,UserShort]],save_path:str=False) -> list[dict]:
+        '''Converts User or UserShort LIST into a formatted json string'''
+        return [short.model_dump() for short in UserList]
+    
+
+    def _retrieve_json_wrap(action):
+        @functools.wraps(action)  
+        def wrapper(self:'Bot_Account',save_path:str,*args,**kwargs):
+            retrieved = ''
+            with open(save_path, 'r') as json_file:
+                retrieved = json.load(json_file)
+                json_file.close()
+            return action(self,save_path,*args,_retrieved=retrieved,**kwargs)
+        return wrapper  
+    
+    
+    @_retrieve_json_wrap
+    def retrieve_json_UserShortList(self,save_path:str,_retrieved=False)->list[UserShort]:
+        '''retrieve a dumped userlist json (only for UserShort)'''
+
+        diclist = _retrieved
+        
+        shortlist = []
+        for dic in diclist:
+            short = UserShort(**dic)
+            shortlist.append(short)
+        return shortlist
+
+
+    @_retrieve_json_wrap
+    def retrieve_json_User(self,save_path:str,_retrieved=False)->User:
+        '''retrieve a dumped User json (only for single User)'''
+
+        dic = _retrieved
+        user = User(**dic)
+        return user
 
 
     def _action_wrap(action):
+        '''Wrapper for bot actions that can result in an exception, for example instagram blocking you into solving a captcha.'''
         @functools.wraps(action)  
         def wrapper(self:'Bot_Account',*args,**kwargs):
             #check if bot is avaliable
@@ -191,8 +239,9 @@ class Bot_Account(Base):
                 return 200
             #try to perform action trough instagrapi
             try:
-                action(self,*args,**kwargs)
+                result = action(self,*args,**kwargs)
                 instalog.talk(f'Action finished. Remaining tokens: [{str(self.stats_tokens)}]')
+                ctimer.wait(self.config_wait_range_1,self.config_wait_range_2)
             except LoginRequired as e:
                 return iexceptions.loginrequired(self,e)
             except PleaseWaitFewMinutes as e:
@@ -201,14 +250,19 @@ class Bot_Account(Base):
                 return iexceptions.ChallengeRequired(self,e)
             except FeedbackRequired as e:
                 return iexceptions.FeedbackRequired(self,e)
+            except ClientNotFoundError as e:
+                return iexceptions.ClientNotFoundError(self,e)
             except Exception as e:
                 return iexceptions.unhandled(e)
-            return True
+            if not result:
+                return False
+            else:
+                return result
         return wrapper
 
 
     @_action_wrap
-    def scrape_followers(self,*args,user_id:str,chunk_size=190,cursor='',max_followers=400,**kwargs) -> list[UserShort]:
+    def scrape_followers(self,*args,user_id:str,chunk_size=100,cursor='',max_followers=400,**kwargs) -> list[UserShort]:
         '''
             - chunk_size: ammount of followers to receive per request (max recomended is 200)
             - cursor: position in the follower list, so you don't request always the same chunk of followers
@@ -225,7 +279,7 @@ class Bot_Account(Base):
 
 
     @_action_wrap
-    def scrape_following(self,*args,user_id:str,chunk_size=190,cursor='',max_following=400,**kwargs) -> list[UserShort]:
+    def scrape_following(self,*args,user_id:str,chunk_size=100,cursor='',max_following=400,**kwargs) -> list[UserShort]:
         '''
             - chunk_size: ammount of following to receive per request (max recomended is 200)
             - cursor: position in the following list, so you don't request always the same chunk of following
@@ -242,17 +296,12 @@ class Bot_Account(Base):
 
 
     @_action_wrap
-    def scrape_account_data(self,username:str, Fjson=False)->User:
+    def scrape_account_data(self,username:str)->User:
         '''
            - If Fjson = False (default), returns User object
            - If Fjson = True, returns formated json string
         '''
-        user_obj = self.client.user_info_by_username_v1(username)
-        if Fjson:
-            dic = user_obj.model_dump()
-            return json.dumps(dic,indent=4,default=str)
-        else:
-            return user_obj
+        return self.client.user_info_by_username_v1(username)
 
 
     @_action_wrap
@@ -269,7 +318,7 @@ class Bot_Account(Base):
         unfollowed = self.client.user_unfollow(user_id)
         if unfollowed:
             self._register_unfollowed(userId=user_id)
-            
+
 
     def _action_stats_wrap(func):
         @functools.wraps(func) 
@@ -308,6 +357,24 @@ class Bot_Account(Base):
             instalog.error(f"Error removing user [{str(userId)}] from automated following list")
 
 
+    def check_login(self)->bool:
+        '''Check if self is logged in'''
+        instalog.talk('Checking login...')
+        logedin = False
+        if not hasattr(self,"client"):
+            instalog.talk('No client was started..')
+            return logedin
+        try:
+            self.client.get_timeline_feed()
+            instalog.talk('Login confirmed...')
+            logedin = True
+        except:
+            instalog.talk('Not loged in...')
+            logedin = False
+
+        return logedin
+    
+
     def login(self) -> bool:
         """
             - Attempts to login to Instagram using either the provided session information
@@ -342,14 +409,12 @@ class Bot_Account(Base):
                 if not self.check_login():
                     instalog.talk("Session is invalid, need to login via username and password")
                     
-                    # Use the same device uuids across logins
-                    old_session = self.client.get_settings()
-                    self.client.set_settings({})
-                    self.client.set_uuids(old_session["uuids"])
-
+                    self.client.sessionid=''
+                    self.client.mid=''
+                    
                     self.client.login(self.username, self.password)
                     self.check_login()
-
+                    login_via_session = True
                 login_via_session = True
             except Exception as e:
                 instalog.talk("Couldn't login user using session information: %s" % e)
@@ -370,7 +435,7 @@ class Bot_Account(Base):
         
         self.client.dump_settings(config.get_instagrapi_settings_path(self.username))
         now = datetime.datetime.now()
-        self.last_login = now
+        self.stats_last_login = now
         self.stats_logins+=1
         self.saveInstance()
         return True

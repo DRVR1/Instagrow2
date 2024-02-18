@@ -1,4 +1,9 @@
-#just a log
+'''
+Author: ian vidmar
+
+Description:
+    Simple logger module
+'''
 
 import config
 import datetime

@@ -1,4 +1,6 @@
 '''
+Author: ian vidmar
+
 Description:
     Time related functions
 '''
@@ -54,13 +56,14 @@ def check_avaliable(bot)->bool:
         return False
     return True
 
-def wait(time,time2=False,reason:str=False) -> None:
+def wait(time:float,time2:float,reason:str=False) -> None:
     '''
     Waits a random time interval [time - time2]
     '''
     if(time2):
-        time = random.randint(time,time2)
+        time = random.uniform(time,time2)
+    txt = "Waiting "+ str(time) + " seconds."
     if reason:
-        instalog.talk("Waiting "+ str(time) + " seconds. Reason: " + reason)
-
+        txt += " Reason: " + reason
+    instalog.talk(txt)        
     sleep(float(time))
