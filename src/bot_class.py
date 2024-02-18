@@ -14,6 +14,7 @@ import functools
 from math import ceil
 from typing import Union
 import os
+import json
 
 # Downloaded modules
 import instagrapi
@@ -25,7 +26,6 @@ from instagrapi.types import User, UserShort
 
 # Custom modules
 import config
-import json
 import ctimer
 import instalog
 import iexceptions

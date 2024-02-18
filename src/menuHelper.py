@@ -13,10 +13,10 @@ import sys
 # Custom modules
 import config
 from bot_class import *
+import instalog
 
 # Downloaded modules
 import json
-import instalog
 from PyQt5.QtWidgets import QApplication, QFileDialog
 
 class Menu_Helper():
