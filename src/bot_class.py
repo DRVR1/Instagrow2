@@ -277,6 +277,7 @@ class Bot_Account(Base):
             cursor = max 
             # Add obtained followers (UserShort) to the existing list
             user_list+=userlist 
+            ctimer.wait(self.config_wait_range_1,self.config_wait_range_2)
         return user_list
 
 
@@ -294,6 +295,7 @@ class Bot_Account(Base):
             cursor = max 
             # Add obtained followers (UserShort) to the existing list
             user_list+=userlist 
+            ctimer.wait(self.config_wait_range_1,self.config_wait_range_2)
         return user_list
 
 
