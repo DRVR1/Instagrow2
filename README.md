@@ -22,8 +22,6 @@ The misuse of this software can lead to the temporary or permanent blocking of y
 - Enable proxy settings
 
 ## Requirements
-- json
-- instalog
 - PyQt5
 - sqlalchemy
 - instagrapi
