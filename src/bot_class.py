@@ -13,6 +13,7 @@ import datetime
 import functools
 from math import ceil
 from typing import Union
+import os
 
 # Downloaded modules
 import instagrapi
@@ -28,6 +29,7 @@ import json
 import ctimer
 import instalog
 import iexceptions
+from default_settings import default
 
 
 # Define paths/strings
@@ -395,8 +397,21 @@ class Bot_Account(Base):
             instalog.talk('Stored session found, reusing session...')
         except:
             instalog.talk('No stored session found, trying via username and password.')
-            pass
-
+            if not os.path.exists(config.get_instagrapi_settings_path(self.username)):
+                instalog.talk("Loading custom default settings from 'default_settings.py'")
+                device = default.device_settings
+                agent = default.user_agent
+                country = default.country
+                country_code = default.country_code
+                locale = default.locale
+                timezone_offset = default.timezone_offset
+                self.client.device_settings = device
+                self.client.user_agent = agent
+                self.client.country = country
+                self.client.country_code = country_code
+                self.client.locale = locale
+                self.client.timezone_offset = timezone_offset
+                
         login_via_session = False
         login_via_pw = False
 

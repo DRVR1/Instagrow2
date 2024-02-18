@@ -1,0 +1,26 @@
+Timezone offsets:
+
+Buenos Aires, Argentina: UTC-3 (timezone_offset: -10800)
+New York, United States: UTC-5 (timezone_offset: -18000)
+London, United Kingdom: UTC+0 (timezone_offset: 0)
+Moscow, Russia: UTC+3 (timezone_offset: 10800)
+Beijing, China: UTC+8 (timezone_offset: 28800)
+Tokyo, Japan: UTC+9 (timezone_offset: 32400)
+Sydney, Australia: UTC+11 (timezone_offset: 39600)
+Auckland, New Zealand: UTC+13 (timezone_offset: 46800)
+
+How to calculate your offset according to your timezone:
+
+1) Start with the UTC offset in hours.
+2) Multiply the number of hours by 3600 (the number of seconds in an hour).
+3) If it's a positive offset (e.g., UTC+3), the result will be positive. If it's a negative offset (e.g., UTC-3), the result will be negative.
+
+Example: 
+
+Convert UTC-3 to seconds:
+
+1) UTC offset: -3 hours
+
+2) -3 hours * 3600 seconds/hour = -10800 seconds
+
+3) So, UTC-3 is equivalent to -10800 seconds.
