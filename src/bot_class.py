@@ -69,7 +69,8 @@ class Bot_Account(Base):
     scheduled_unfollows = Column(Integer)#sets the total number of account that must be unfollowed
     scheduled_unfollows_everyone = Column(Boolean)#a bool that defines wether the scheduled unfollow should look at the following_list_json, or just unfollow everyone
     # Instagrapi configuration
-    instagrapi_max_list_query = Column(Integer) #limit the followers/following ammount retrieved from instagram (for safety)
+    instagrapi_max_list_query = Column(Integer) # Limit the followers/following ammount retrieved from instagram (for safety)
+    #instagrapi_scrapper_chunk_size = Column(Integer) # Ammount of scrapped followers per api request
     # Instagram interactions
     automated_followings_ids = Column(String) # List of users id's (serialized json)
     all_followings_shorts = Column(String) # List of userShort (serialized json)
@@ -111,6 +112,7 @@ class Bot_Account(Base):
 
                 # Instagrapi configuration
                 instagrapi_max_list_query = 200,
+                #instagrapi_scrapper_chunk_size = 30,
 
                 # Instagram interactions
                 automated_followings_ids = json.dumps([]),
@@ -264,7 +266,7 @@ class Bot_Account(Base):
 
 
     @_action_wrap
-    def scrape_followers(self,*args,user_id:str,chunk_size=100,cursor='',max_followers=400,**kwargs) -> list[UserShort]:
+    def scrape_followers(self,*args,user_id:str,chunk_size=130,cursor='',max_followers=400,**kwargs) -> list[UserShort]:
         '''
             - chunk_size: ammount of followers to receive per request (max recomended is 200)
             - cursor: position in the follower list, so you don't request always the same chunk of followers
@@ -272,17 +274,17 @@ class Bot_Account(Base):
         '''
         user_list = []
         iterations = ceil(max_followers/chunk_size)
-        for _ in range(iterations):
+        for i in range(iterations):
             userlist, max = self.client.user_followers_v1_chunk(user_id,max_amount=chunk_size,max_id=cursor)
             cursor = max 
             # Add obtained followers (UserShort) to the existing list
             user_list+=userlist 
-            ctimer.wait(self.config_wait_range_1,self.config_wait_range_2)
+            ctimer.wait(self.config_wait_range_1,self.config_wait_range_2,f'Chunk [{str(i)}] Chunk Size: [{str(chunk_size)}]')
         return user_list
 
 
     @_action_wrap
-    def scrape_following(self,*args,user_id:str,chunk_size=100,cursor='',max_following=400,**kwargs) -> list[UserShort]:
+    def scrape_following(self,*args,user_id:str,chunk_size=130,cursor='',max_following=400,**kwargs) -> list[UserShort]:
         '''
             - chunk_size: ammount of following to receive per request (max recomended is 200)
             - cursor: position in the following list, so you don't request always the same chunk of following
@@ -290,12 +292,12 @@ class Bot_Account(Base):
         '''
         user_list = []
         iterations = ceil(max_following/chunk_size)
-        for _ in range(iterations):
+        for i in range(iterations):
             userlist, max = self.client.user_following_v1_chunk(user_id,max_amount=chunk_size,max_id=cursor)
             cursor = max 
             # Add obtained followers (UserShort) to the existing list
             user_list+=userlist 
-            ctimer.wait(self.config_wait_range_1,self.config_wait_range_2)
+            ctimer.wait(self.config_wait_range_1,self.config_wait_range_2,f'Chunk [{str(i)}] Chunk Size: [{str(chunk_size)}]')
         return user_list
 
 

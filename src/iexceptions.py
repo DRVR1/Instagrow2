@@ -5,6 +5,7 @@ Description:
     Handler for instagrapi exceptions (tells the bot what to do with specific exceptions)
 '''
 
+# Custom modules
 import instalog
 
 # Functions returns false when the execution should not continue.

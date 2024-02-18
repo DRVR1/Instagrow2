@@ -59,14 +59,14 @@ def check_avaliable(bot)->bool:
     return True
 
 
-def wait(time:float,time2:float,reason:str=False) -> None:
+def wait(time:float,time2:float,comment:str=False) -> None:
     '''
     Waits a random time interval [time - time2]
     '''
     if(time2):
         time = random.uniform(time,time2)
     txt = "Waiting "+ str(time) + " seconds."
-    if reason:
-        txt += " Reason: " + reason
+    if comment:
+        txt += " Comment: " + comment
     instalog.talk(txt)        
     sleep(float(time))

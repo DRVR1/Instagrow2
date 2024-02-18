@@ -14,6 +14,7 @@ import sys
 import config
 from bot_class import *
 import instalog
+import filehelper
 
 # Downloaded modules
 import json
@@ -259,10 +260,14 @@ Scheduler activated: {str(bot.scheduled_enabled)}
                 filename = func(self,bot,*args,_uname=uname,_uId=uId,**kwargs)
             else:
                 filename, shortlist = func(self,bot,*args,_uname=uname,_uId=uId,_max=max,**kwargs)
-                if not shortlist:
+                if not isinstance(shortlist,list):
+                    return False
+                elif not isinstance(shortlist[0],UserShort):
                     return False
 
-            savePath = os.path.join(config.instagrow_scrapped_path,filename)
+            _savePath = os.path.join(config.instagrow_scrapped_path,filename)
+
+            savePath = filehelper.rename_file(_savePath)
 
             if single:
                 bot.dump_user_obj_to_json(userObj,save_path=savePath)
