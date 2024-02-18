@@ -37,9 +37,9 @@ Since this is a pre-alpha, some functions are not yet avaliable, such as user da
 
 As you can see, some measures depend completely on you. This app is configured by default with the safests measures, according to the [instagrapi documentation](https://subzeroid.github.io/instagrapi/usage-guide/best-practices.html), also your sessionID will be automatically saved.
 
-## How to use (options explained)
+## How to use
 
-> python main.py
+### To start, run > python main.py
 
 Example: i want to follow the followers of @python.hub to increase my account visibility (beacuse i make python posts too)
 
