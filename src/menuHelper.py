@@ -240,7 +240,7 @@ Scheduler activated: {str(bot.scheduled_enabled)}
             if single:
                 pass
             else:
-                print("How much followers (max) do you want to scrape? (the less, the safer, and faster)")
+                print("How much users (max) do you want to scrape? (the less, the safer, and faster)")
                 max = self.get_input()
                 if not max:
                     return False
