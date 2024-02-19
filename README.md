@@ -16,12 +16,15 @@ The misuse of this software can lead to the temporary or permanent blocking of y
 
 ## Coming soon:
 - List people who don't follow you back and save the list
+- Executable setup for windows
 - Compatibility with linux.
 - AutoStartup and automatic actions (no human intervention needed).
 - Automatic content posting (posts, comments, likes, histories).
 - Enable proxy settings
 
 ## Requirements
+- python3
+
 - PyQt5
 - sqlalchemy
 - instagrapi
