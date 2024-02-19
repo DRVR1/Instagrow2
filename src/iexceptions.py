@@ -40,6 +40,16 @@ def ClientNotFoundError(bot_object,exception):
     return True
 
 
+def SubmitPhoneNumberForm(bot_object,exception):
+    instalog.error(f"i. Handled exception: {exception}\ni. Enter to your account, and validate a phone number to get unblocked.")
+    return False
+
+
+def ChallengeUnknownStep(bot_object,exception):
+    instalog.error(f"i. Handled exception: {exception}\ni. Enter to your account, and follow the requested steps to get unblocked.")
+    return False
+
+
 def unhandled(e):
     instalog.error(f'i. Unhandled exception: {e}')
     return False

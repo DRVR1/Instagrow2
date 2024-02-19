@@ -247,7 +247,7 @@ Scheduler activated: {str(bot.scheduled_enabled)}
             uname = str(input("Instagram account: @"))
             if uname == '0':
                 return False
-            if not bot.login():
+            if not bot.login(disable_wait=True):
                 return False
             # Get user object
             instalog.talk('Getting user object...')
@@ -334,7 +334,7 @@ Scheduler activated: {str(bot.scheduled_enabled)}
             print('Input 0 for cancel. Input anything to continue.')
             if not self.get_input():
                 return False
-            if not bot.login():
+            if not bot.login(disable_wait=True):
                 return False
             result = func(self,bot,*args,_shortlist=shortList,**kwargs)
             input('Continue')

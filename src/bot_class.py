@@ -21,7 +21,7 @@ import instagrapi
 from sqlalchemy import create_engine, Column, Integer, String, Float,Column, DateTime, Integer,Boolean
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from instagrapi.exceptions import LoginRequired, PleaseWaitFewMinutes, ChallengeRequired, FeedbackRequired, ClientNotFoundError
+from instagrapi.exceptions import LoginRequired, PleaseWaitFewMinutes, ChallengeRequired, FeedbackRequired, ClientNotFoundError, SubmitPhoneNumberForm, ChallengeUnknownStep
 from instagrapi.types import User, UserShort
 
 # Custom modules
@@ -244,8 +244,9 @@ class Bot_Account(Base):
             #try to perform action trough instagrapi
             try:
                 result = action(self,*args,**kwargs)
-                instalog.talk(f'Action finished. Remaining tokens: [{str(self.stats_tokens)}]')
-                ctimer.wait(self.config_wait_range_1,self.config_wait_range_2)
+                if not kwargs.get('disable_wait'):
+                    instalog.talk(f'Action finished. Remaining tokens: [{str(self.stats_tokens)}]')
+                    ctimer.wait(self.config_wait_range_1,self.config_wait_range_2)
             except LoginRequired as e:
                 return iexceptions.loginrequired(self,e)
             except PleaseWaitFewMinutes as e:
@@ -256,6 +257,10 @@ class Bot_Account(Base):
                 return iexceptions.FeedbackRequired(self,e)
             except ClientNotFoundError as e:
                 return iexceptions.ClientNotFoundError(self,e)
+            except SubmitPhoneNumberForm as e:
+                return iexceptions.SubmitPhoneNumberForm(self,e)
+            except ChallengeUnknownStep as e:
+                return iexceptions.ChallengeUnknownStep(self,e)
             except Exception as e:
                 return iexceptions.unhandled(e)
             if not result:
@@ -382,23 +387,44 @@ class Bot_Account(Base):
     
 
     def _default_settings(self):
-        '''Reset bot's instagrapi settings to custom default ones'''
-        self.client.set_settings({})
+        '''Reset bot's settings, keeping the same
+           random UUIDS and default device info
+        '''
+        # Keep old random UuIDs before resseting
+        old_phone_id = self.client.phone_id
+        old_uuid = self.client.uuid
+        old_client_session_id = self.client.client_session_id
+        old_advertising_id = self.client.advertising_id
+        old_android_device_id = self.client.android_device_id
+        old_request_id = self.client.request_id
+        old_tray_session_id = self.client.tray_session_id
         device = default.device_settings
         agent = default.user_agent
         country = default.country
         country_code = default.country_code
         locale = default.locale
         timezone_offset = default.timezone_offset
+
+        self.client.set_settings({})
+
         self.client.device_settings = device
         self.client.user_agent = agent
         self.client.country = country
         self.client.country_code = country_code
         self.client.locale = locale
         self.client.timezone_offset = timezone_offset
-    
 
-    def login(self) -> bool:
+        self.client.phone_id = old_phone_id
+        self.client.uuid = old_uuid
+        self.client.client_session_id = old_client_session_id
+        self.client.advertising_id = old_advertising_id
+        self.client.android_device_id = old_android_device_id
+        self.client.request_id = old_request_id
+        self.client.tray_session_id = old_tray_session_id
+
+
+    @_action_wrap
+    def login(self,disable_wait:bool=True) -> bool:
         """
             - Attempts to login to Instagram using either the provided session information
               or the provided username and password.
@@ -436,7 +462,7 @@ class Bot_Account(Base):
                     instalog.talk("Session is invalid, need to login via username and password")
                     
                     self._default_settings()
-                    
+
                     self.client.login(self.username, self.password)
                     self.check_login()
                     login_via_session = True
@@ -445,14 +471,10 @@ class Bot_Account(Base):
                 instalog.talk("Couldn't login user using session information: %s" % e)
 
         if not login_via_session:
-            try:
-                instalog.talk("Attempting to login via username and password. username: %s" % self.username)
-                if self.client.login(self.username, self.password):
-                    self.check_login()
-                    login_via_pw = True
-            except Exception as e:
-                instalog.error("Couldn't login user using username and password: %s" % e)
-                return False
+            instalog.talk("Attempting to login via username and password. username: %s" % self.username)
+            if self.client.login(self.username, self.password):
+                self.check_login()
+                login_via_pw = True
 
         if not login_via_pw and not login_via_session:
             instalog.error("Couldn't login user with either password or session")

@@ -52,6 +52,8 @@ def configure_bot(bot:'Bot_Account'):
         elif op == 5:
             helper.configure_wait_time(bot)
             configure_bot(bot)
+        elif op == 6:
+            configure_bot(bot)
         elif op == 7:
             result = helper.scrape_followers_by_username(bot)
             if not result:
