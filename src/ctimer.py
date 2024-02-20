@@ -63,10 +63,13 @@ def wait(time:float,time2:float,comment:str=False) -> None:
     '''
     Waits a random time interval [time - time2]
     '''
-    if(time2):
-        time = random.uniform(time,time2)
+    time = random.uniform(time,time2)
+
     txt = "Waiting "+ str(time) + " seconds."
+
     if comment:
         txt += " Comment: " + comment
+
     instalog.talk(txt)        
+    
     sleep(float(time))

@@ -228,41 +228,83 @@ Scheduler activated: {str(bot.scheduled_enabled)}
         print(f'Current wait range: {self.bot_get_action_wait_range(bot)}')       
 
 
+    def _scrapper_login_handler(self,bot:'Bot_Account', single):
+        '''Login and select target user'''
+        os.system("cls")        
+        print("WARNING: It's not recomended to scrape foreign data with your personal account (can get you banned). Please use a trash account.\n")
+        
+        max = None
+
+        # If mass scrapping
+        if not single:
+            print("How much users (max) do you want to scrape? (the less, the safer, and faster)")
+            max = self.get_input()
+            if not max:
+                return False
+            
+        # Both cases (mass and single scrapping)
+        uname = str(input("Instagram account: @"))
+        if uname == '0':
+            return False
+    
+        # Ask for cursor if user has it
+        cursor = ''
+        if not single:
+            cursor_input = str(input("Last saved cursor (default leave blank): "))
+            if cursor_input:
+                cursor = cursor_input
+
+        if not bot.login(disable_wait=True):
+            return False
+        
+        return max, uname, cursor
+    
+
     def _scrapper_wrap(func):
         '''A wrapper for scrapping activities'''
         @functools.wraps(func) 
         def wrapper(self:'Menu_Helper',bot:'Bot_Account',*args,**kwargs):
-            os.system("cls")
-            # Check if the function was called for User (single) or list[UserShort]
             single = kwargs.get('single')
-            # Login and option selection
-            print("WARNING: It's not recomended to scrape foreign data with your personal account (can get you banned). Please use a trash account.\n")
-            if single:
-                pass
-            else:
-                print("How much users (max) do you want to scrape? (the less, the safer, and faster)")
-                max = self.get_input()
-                if not max:
-                    return False
-            uname = str(input("Instagram account: @"))
-            if uname == '0':
-                return False
-            if not bot.login(disable_wait=True):
-                return False
-            # Get user object
+
+            # Login and ask the user max ammount of users, and target user
+            max_followers, uname, input_cursor = self._scrapper_login_handler(bot,single)
+
+            # Get target user object
             instalog.talk('Getting user object...')
             userObj = bot.scrape_account_data(uname)
             if not userObj:
                 return False
+            
+            # Retrieve userID from user object in order to scrape
             uId = userObj.pk
 
+            # Retrieve total followers and followings count.
+            follower_count = userObj.follower_count
+            following_count = userObj.following_count
+                        
+            # Define possible outputs outside the conditional structure
+            shortlist = None
+            cursor = None
+            filename = None
+            # Scrape single account
             if single:
                 filename = func(self,bot,*args,_uname=uname,_uId=uId,**kwargs)
+            # Scrape multiple accounts
             else:
-                filename, shortlist = func(self,bot,*args,_uname=uname,_uId=uId,_max=max,**kwargs)
+                returned = func(self,bot,*args,_uname=uname,_uId=uId,_follower_count=follower_count,_following_count=following_count,_max_followers=max_followers,_cursor=input_cursor,**kwargs)
+                # Scrapping fully completed
+                if len(returned) == 2:
+                    filename, shortlist = returned
+                # Instagram interrupted scrapping
+                elif len(returned) == 3:
+                    filename, shortlist, cursor = returned
+
+                # Checks if shortlist is actually a list and contains users
                 if not isinstance(shortlist,list):
+                    instalog.error(f"Scrapping didn't return a list. Try again")
                     return False
                 elif not isinstance(shortlist[0],UserShort):
+                    instalog.error(f"Scrapped list doesn't contain user objects. Try again")
                     return False
 
             _savePath = os.path.join(config.instagrow_scrapped_path,filename)
@@ -281,31 +323,49 @@ Scheduler activated: {str(bot.scheduled_enabled)}
     
 
     @_scrapper_wrap
-    def scrape_followers_by_username(self,bot:'Bot_Account',_uname=False,_uId=False,_max=False) -> tuple[str,list[UserShort]]:
+    def scrape_followers_by_username(self,bot:'Bot_Account',_uname=False,_uId=False,_follower_count=False,_following_count=False,_max_followers=False,_cursor=False) -> Union[tuple[str,list],list]:
         uname = _uname
         uId = _uId
-        max = _max
-        # Scrape followers from user ID
-        instalog.talk('Scrapping...')
-        shortlist = bot.scrape_followers(user_id=uId,max_followers=max)
+        follower_count = _follower_count
+        max_followers = _max_followers
+        cursor = _cursor
 
-        # Save scraped followers into a file
         filename = uname + '.followers.' + uId + '.json'
 
+        instalog.talk('Scrapping...')
+        # Scrape followers from user ID
+        shortlist = bot.scrape_followers(uId,follower_count,max_followers=max_followers,cursor=cursor)
+        
+        # Instagram exception (returned tuple)
+        if isinstance(shortlist,tuple):
+            shortlist, cursor =  shortlist
+            return filename, shortlist, cursor
+
+        # No exception (returned shortlist)
         return filename, shortlist
 
 
     @_scrapper_wrap
-    def scrape_followings_by_username(self,bot:'Bot_Account',_uname=False,_uId=False,_max=False) -> tuple[str,list[UserShort]]:
+    def scrape_followings_by_username(self,bot:'Bot_Account',_uname=False,_uId=False,_follower_count=False,_following_count=False,_max_followers=False,_cursor=False) -> Union[tuple[str,list],list]:
         uname = _uname
         uId = _uId
-        max = _max
-        # Scrape followings from user ID
-        shortlist = bot.scrape_following(user_id=uId,max_following=max)
+        following_count = _following_count
+        max_followers = _max_followers
+        cursor = _cursor
 
         # Save scraped followings into a file
         filename = uname + '.followings.' + uId + '.json'
+        
+        instalog.talk('Scrapping...')
+        # Scrape followings from user ID
+        shortlist = bot.scrape_following(uId,following_count,max_followers=max_followers,cursor=cursor)
 
+        # Instagram exception (returned tuple)
+        if isinstance(shortlist,tuple):
+            shortlist, cursor =  shortlist
+            return filename, shortlist, cursor
+
+        # No exception (returned shortlist)
         return filename, shortlist
 
 
@@ -331,7 +391,7 @@ Scheduler activated: {str(bot.scheduled_enabled)}
             # Convert json file to UserShort list
             shortList = bot.retrieve_json_UserShortList(save_path=file_path)
             instalog.talk(f"Warning: {str(len(shortList))} accounts are selected. Do you wish to continue?")
-            print('Input 0 for cancel. Input anything to continue.')
+            print('Input 0 for cancel. Input any number to continue.')
             if not self.get_input():
                 return False
             if not bot.login(disable_wait=True):

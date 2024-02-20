@@ -16,13 +16,13 @@ class default():
             "dpi": "450dpi",
             "resolution": "1080x2185",
             "manufacturer": "samsung",
-            "device": "a33x",
+            "device": "Galaxy A33 5G",
             "model": "SM-A336M",
             "cpu": "arm64-v8a",
             "version_code": "A336MUBS7DXA1"
             }
     
-    user_agent = "Instagram 318.0.0.30.110 Android (34/14.0.0; 450dpi; 1080x2185; samsung; a33x; SM-A336M; arm64-v8a; en_US; A336MUBS7DXA1)"
+    user_agent = "Instagram 318.0.0.30.110 Android (34/14.0.0; 450dpi; 1080x2185; samsung; Galaxy A33 5G; SM-A336M; arm64-v8a; en_US; A336MUBS7DXA1)"
     
     country = "US"
     

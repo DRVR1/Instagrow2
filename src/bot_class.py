@@ -91,7 +91,7 @@ class Bot_Account(Base):
 
                 # Stats 
                 stats_logins = 0,
-                stats_last_login = None,
+                stats_last_login = datetime.datetime.min,
                 stats_tokens = 200,
                 stats_total_followed = 0,
                 stats_total_unfollowed = 0,
@@ -157,7 +157,7 @@ class Bot_Account(Base):
         for user in accounts:
             followed = self.follow(user_id=user.pk)
             if not followed:
-                return False
+                pass
             
 
     def unfollow_mass(self,accounts:list[Union[User,UserShort]])->bool:
@@ -171,7 +171,7 @@ class Bot_Account(Base):
         for user in accounts:
             unfollowed = self.unfollow(user_id=user.pk)
             if not unfollowed:
-                return False
+                pass
 
 
     def _dump_json_wrap(action):
@@ -235,7 +235,10 @@ class Bot_Account(Base):
 
 
     def _action_wrap(action):
-        '''Wrapper for bot actions that can result in an exception, for example instagram blocking you into solving a captcha.'''
+        '''
+           Wrapper for bot actions that can result in an exception, for example instagram blocking you into solving a captcha.
+           Serious exceptions will cause the wrapped function to return False.
+        '''
         @functools.wraps(action)  
         def wrapper(self:'Bot_Account',*args,**kwargs):
             #check if bot is avaliable
@@ -263,47 +266,181 @@ class Bot_Account(Base):
                 return iexceptions.ChallengeUnknownStep(self,e)
             except Exception as e:
                 return iexceptions.unhandled(e)
-            if not result:
-                return False
-            else:
+            if result:
                 return result
+            else:
+                return False
+        return wrapper
+    
+
+    def print_final_scrapped(self, final_user_list:list, cursor_max:str)->None:
+        instalog.talk(f'Total followers retrieved: {str(len(final_user_list))}, last cursor: {cursor_max}')
+
+
+    def _mass_scrape_wrap(action):
+        @functools.wraps(action)  
+        def wrapper(self:'Bot_Account',*args,**kwargs):
+            
+            
+
+            user_id = args[0]
+            follower_count = args[1]
+
+            final_user_list = []
+            cursors = []
+            cursor_errors = 0
+            cursor_max = ''
+
+            max_followers = kwargs.get('max_followers')
+            if not max_followers:
+                max_followers=400
+
+            # Adjust total requested followers if it exceeds the original follower count
+            if max_followers > follower_count:
+                max_followers = follower_count
+
+            chunk_size = kwargs.get('chunk_size')
+            if not chunk_size:
+                chunk_size=20
+
+            # Adjust chunk size if requested followers are under the chunk size
+            if max_followers < chunk_size:
+                chunk_size = max_followers
+
+            cursor = kwargs.get('cursor')
+            if not cursor:
+                cursor=''
+
+            # Ceil: round up
+            chunk_ammount = ceil(max_followers/chunk_size)
+
+            i = 0
+
+            debt = 0
+            while i < chunk_ammount:
+                instalog.talk(f'Total chunks: {str(chunk_ammount)}, size of each: {str(chunk_size)}, follower/ing count: {str(follower_count)}, user id: {user_id}')
+                instalog.talk(f'Chunk number: [{str(i)}] Chunk Size: [{str(chunk_size)}] Scrapping...')
+                try:
+                    userlist, cursor_max = action(self,user_id,follower_count,chunk_size=chunk_size,cursor=cursor,max_followers=max_followers)
+                except Exception as e:
+                    # If at least one chunk was retrieved, return it, and the cursor
+                    if i>=1:
+                        instalog.error(f'An exception has occurred: {e}')
+                        self.print_final_scrapped(final_user_list,cursor_max)
+                        return final_user_list, cursor
+                    # If no chunk was retrieved, pass exception to the exception handler 
+                    else:
+                        raise
+
+                instalog.debug(f'followers got: [{str(len(userlist))}], returned cursor: [{str(cursor_max)}]')
+
+                # Cursor fix (Experimental)
+                if cursor_max in cursors:
+                    instalog.debug(f'Cursor was the same. Repeating request...')
+                    cursor_errors += 1
+                    if cursor_errors >= 3:
+                        instalog.debug(f'3 Cursor errors. Breaking loop')
+                        break
+                    continue
+                cursors.append(cursor_max)
+                cursor = cursor_max
+
+                # Loop iteration
+                i+=1
+
+                # Add obtained followers (UserShort) to the existing list
+                final_user_list+=userlist 
+
+                # Instagram sabottaging our userlist (length varies randomly)
+                total_retrieved_users_len = len(final_user_list)
+                remaining_users = max_followers - total_retrieved_users_len
+
+                # Calculate debt (Extra followers)
+                if not userlist == chunk_size:
+                    diff = len(userlist) - chunk_size 
+                    debt += diff
+                    instalog.debug(f"Debt: {str(debt)}")
+
+                # Case 1 (less): add chunks if debt is less than negative chunk size
+                if debt < -chunk_size:
+                    add = debt // -chunk_size
+                    chunk_ammount += add
+                    instalog.debug(f"Chunk size is not enough to cover user ammount. Adding a new chunk. Chunk ammount: {str(chunk_ammount)}")
+                    debt += add * chunk_size
+
+                # Case 2 (extra): remove chunks if required (if debt reached a chunk size, remove a chunk)
+                if debt >= chunk_size:
+                    subs = debt // chunk_size
+                    chunk_ammount -= subs
+                    instalog.debug(f'Debt of {str(debt)} reached a chunk size. Removing {str(subs)} chunks')
+                    debt -= subs * chunk_size
+
+                # Special case: add a chunk at the end if debt is pending
+                if debt < 0 and chunk_ammount == i:
+                    chunk_ammount +=1
+                    
+                # Sleep for every iteration
+                ctimer.wait(self.config_wait_range_1,self.config_wait_range_2)
+            
+
+            # Clean exceded followers
+            total = len(final_user_list)
+            if total > max_followers:
+                diff = total - max_followers
+                instalog.debug(f'Cleaning exceded (removing last {str(diff)} users)')
+                del final_user_list[-diff:]
+
+            
+            # Print scrapped info
+            self.print_final_scrapped(final_user_list,cursor_max)
+
+            # Return the requested userlist when loop ends
+            return final_user_list
         return wrapper
 
 
     @_action_wrap
-    def scrape_followers(self,*args,user_id:str,chunk_size=190,cursor='',max_followers=400,**kwargs) -> list[UserShort]:
+    @_mass_scrape_wrap
+    def scrape_followers(self,user_id:str,follower_count:int,*args,chunk_size=50,cursor='',max_followers=400,**kwargs) -> Union[list[UserShort],tuple]:
         '''
-            - chunk_size: ammount of followers to receive per request (max recomended is 200)
-            - cursor: position in the follower list, so you don't request always the same chunk of followers
-            - max_followers: total ammount of followers you request to get
-        '''
-        user_list = []
-        iterations = ceil(max_followers/chunk_size)
-        for i in range(iterations):
-            userlist, max = self.client.user_followers_v1_chunk(user_id,max_amount=chunk_size,max_id=cursor)
-            cursor = max 
-            # Add obtained followers (UserShort) to the existing list
-            user_list+=userlist 
-            ctimer.wait(self.config_wait_range_1,self.config_wait_range_2,f'Chunk [{str(i)}] Chunk Size: [{str(chunk_size)}]')
-        return user_list
+            - user_id: the user id whose followers will be extracted
+            - follower_count: total follower ammount of the target (required, otherwise the loop wont stop requesting
+              chunks
+            - chunk_size: ammount of followers to receive per request (default and recomended: 190)
+            - cursor: position in the follower list, so you don't request always the same chunk of followers (default: empty string)
+            - max_followers: total ammount of followers you request to get (default: 400)
 
+            If worked as expected, returns list[UserShort]
+
+            If instagram interrupts the process, returns the tuple: (list[UserShort], cursor) so you can save the cursor and continue
+            scrapping where you left it.
+
+            Note: in this particular case, "followers" means followers or followings.
+        '''
+        userlist, cursor_max = self.client.user_followers_v1_chunk(user_id,max_amount=chunk_size,max_id=cursor)
+        return userlist, cursor_max
+    
 
     @_action_wrap
-    def scrape_following(self,*args,user_id:str,chunk_size=190,cursor='',max_following=400,**kwargs) -> list[UserShort]:
+    @_mass_scrape_wrap
+    def scrape_following(self,user_id:str,follower_count:int,*args,chunk_size=50,cursor='',max_followers=400,**kwargs) -> Union[list[UserShort],tuple]:
         '''
-            - chunk_size: ammount of following to receive per request (max recomended is 200)
-            - cursor: position in the following list, so you don't request always the same chunk of following
-            - max_following: total ammount of following you request to get
+            - user_id: the user id whose followers will be extracted
+            - follower_count: total follower ammount of the target (required, otherwise the loop wont stop requesting
+              chunks
+            - chunk_size: ammount of followers to receive per request (default and recomended: 190)
+            - cursor: position in the follower list, so you don't request always the same chunk of followers (default: empty string)
+            - max_followers: total ammount of followers you request to get (default: 400)
+
+            If worked as expected, returns list[UserShort]
+
+            If instagram interrupts the process, returns the tuple: (list[UserShort], cursor) so you can save the cursor and continue
+            scrapping where you left it.
+
+            Note: in this particular case, "followers" means followers or followings.
         '''
-        user_list = []
-        iterations = ceil(max_following/chunk_size)
-        for i in range(iterations):
-            userlist, max = self.client.user_following_v1_chunk(user_id,max_amount=chunk_size,max_id=cursor)
-            cursor = max 
-            # Add obtained followers (UserShort) to the existing list
-            user_list+=userlist 
-            ctimer.wait(self.config_wait_range_1,self.config_wait_range_2,f'Chunk [{str(i)}] Chunk Size: [{str(chunk_size)}]')
-        return user_list
+        userlist, cursor_max = self.client.user_following_v1_chunk(user_id,max_amount=chunk_size,max_id=cursor)
+        return userlist, cursor_max
 
 
     @_action_wrap
@@ -321,6 +458,7 @@ class Bot_Account(Base):
         followed = self.client.user_follow(user_id)
         if followed:
             self._register_followed(userId=user_id)
+            return True
 
 
     @_action_wrap
@@ -329,6 +467,7 @@ class Bot_Account(Base):
         unfollowed = self.client.user_unfollow(user_id)
         if unfollowed:
             self._register_unfollowed(userId=user_id)
+            return True
 
 
     def _action_stats_wrap(func):
@@ -424,7 +563,7 @@ class Bot_Account(Base):
 
 
     @_action_wrap
-    def login(self,disable_wait:bool=True) -> bool:
+    def login(self,disable_wait:bool=False) -> bool:
         """
             - Attempts to login to Instagram using either the provided session information
               or the provided username and password.
