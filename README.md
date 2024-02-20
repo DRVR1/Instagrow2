@@ -60,3 +60,10 @@ Example: i want to follow the followers of @python.hub to increase my account vi
 ![cli](https://i.imgur.com/lgoh0yp.png)
 ![cli](https://i.imgur.com/ZV3U7ot.png)
 ![cli](https://i.imgur.com/PSv2VMf.png)
+
+# Files
+
+![files](https://i.imgur.com/YYeQuTe.png)
+
+## Scrapped @instagram
+![scrapping](https://i.imgur.com/AK6Izqh.png)
