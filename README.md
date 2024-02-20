@@ -54,3 +54,9 @@ Example: i want to follow the followers of @python.hub to increase my account vi
 6. The scrapped followers will be saved into a json, containing names, pictures urls, and some metadata.
 7. Select the mass follow option and select the previously scrapped json
 8. The app will start following until it runs out of tokens (tokens are a safety measure, altough can be configured)
+
+# Screenshots
+
+![cli](https://i.imgur.com/lgoh0yp.png)
+![cli](https://i.imgur.com/ZV3U7ot.png)
+![cli](https://i.imgur.com/PSv2VMf.png)
