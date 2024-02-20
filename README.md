@@ -12,6 +12,7 @@ The misuse of this software can lead to the temporary or permanent blocking of y
 - Multiple accounts scrapping
 - Scrape followers / followings
 - Saves logs
+- Saves scrapped followers into json and the cursor (index in the list, to continue scrapping later)
 - Stores and loads session data
 
 ## Coming soon:
