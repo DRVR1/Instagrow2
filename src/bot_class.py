@@ -178,6 +178,23 @@ class Bot_Account(Base):
         @functools.wraps(action)  
         def wrapper(self:'Bot_Account',*args,**kwargs):
             dic_or_diclist = action(self,*args,**kwargs)
+
+            # Debug:
+            if config.debug_mode:
+                pks = []
+                repeated = 0
+                diclist_size = str(len(dic_or_diclist))
+                instalog.debug(f'dict list size is {diclist_size}')
+                for item in dic_or_diclist:
+                    pk = item['pk']
+                    instalog.debug(f"pk is: {pk}")
+                    if not pk in pks:
+                        pks.append(pk)
+                    else:
+                        instalog.debug(f'pk: {pk} was already in list!')
+                        repeated+=1
+                instalog.debug(f"Repeated users: {str(repeated)}")
+
             jsonStr = json.dumps(dic_or_diclist,indent=4,default=str)
             save_path = kwargs.get('save_path')
             if save_path:
@@ -280,8 +297,6 @@ class Bot_Account(Base):
     def _mass_scrape_wrap(action):
         @functools.wraps(action)  
         def wrapper(self:'Bot_Account',*args,**kwargs):
-            
-            
 
             user_id = args[0]
             follower_count = args[1]

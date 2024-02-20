@@ -15,6 +15,7 @@ import config
 from bot_class import *
 import instalog
 import filehelper
+import art
 
 # Downloaded modules
 import json
@@ -60,6 +61,7 @@ class Menu_Helper():
                     print('Autostart enabled. Waiting for user configuration.')
                 sleep(3)
         '''
+        print(art.app_title)
         if config.debug_mode:
             print(f'Startup folder: {config.get_startup_folder()}')
             print(f'Executing from: {config.get_running_path()}\n')

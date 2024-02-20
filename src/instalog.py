@@ -49,5 +49,5 @@ def error(words):
 
 @_print_wrapper
 def debug(words):
-    pass
-    #print(words)
+    if config.debug_mode:
+        print(words)

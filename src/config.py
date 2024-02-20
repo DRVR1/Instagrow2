@@ -13,7 +13,7 @@ Description:
 import os
 import sys
 
-debug_mode = True
+debug_mode = False
 
 #===============|String Values|================:
 AppName = 'InstaGrow2'
