@@ -9,10 +9,9 @@ The misuse of this software can lead to the temporary or permanent blocking of y
 ## Features:
 - Mass follow / unfollow instagram accounts.
 - Single account full scrapping
-- Multiple accounts scrapping
 - Scrape followers / followings
 - Saves logs
-- Saves scrapped followers into json and the cursor (index in the list, to continue scrapping later)
+- Saves scrapped followers into json files
 - Stores and loads session data
 
 ## Coming soon:
@@ -37,7 +36,7 @@ The misuse of this software can lead to the temporary or permanent blocking of y
 - Waiting a reasonable time between following/posting/etc
 - Loging in with a sessionID
 - Changing the file ./src/default_settings.py" with your own device settings (more info in ./examples)
-- Not scrapping foreign info
+- Not scrapping foreign info 
 
 What safety measures you take, depends on your usecase. This app is configured by default with the safests measures, according to the [instagrapi documentation](https://subzeroid.github.io/instagrapi/usage-guide/best-practices.html), also your sessionID will be automatically saved.
 
@@ -45,9 +44,9 @@ What safety measures you take, depends on your usecase. This app is configured b
 
 ### To start, run > python main.py
 
-Example: i want to follow the followers of @python.hub to increase my account visibility (beacuse i make python posts too)
+Example 1: i want to follow the followers of @python.hub to increase my account visibility (beacuse i make python posts too)
 
-1. Add your instagram account (@username and password)
+1. Add your instagram account (@username and password) (as you are extracting foreign info, use an account you can afford to lose).
 2. Two factor autentication must be disabled in order to login from this app.
 3. Select the scrape account followers option
 4. Enter the target username (@python.hub)
