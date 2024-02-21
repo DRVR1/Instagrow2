@@ -218,6 +218,27 @@ class Bot_Account(Base):
         return [short.model_dump() for short in UserList]
     
 
+    @_dump_json_wrap
+    def merge_user_list(self,pathlist:str,save_path:str=False) -> list[UserShort]:
+        '''
+           Input: two paths of dumped json userList
+           Output: one json with the merged follower lists
+
+           if save_path is not provided, returns formated json string
+           else, saves the json in the provided path
+        '''
+
+        final_set = set({})
+
+        # O(len(pathlist) * len(a_set))
+        for path in pathlist:
+            a_set = set(self.retrieve_json_UserShortList(path))
+            final_set.update(a_set) # o(m)
+
+        final_list = list(final_set)
+        return [short.model_dump() for short in final_list]
+
+
     def _retrieve_json_wrap(action):
         @functools.wraps(action)  
         def wrapper(self:'Bot_Account',save_path:str,*args,**kwargs):
@@ -337,6 +358,12 @@ class Bot_Account(Base):
                 instalog.talk(f'Chunk number: [{str(i)}] Chunk Size: [{str(chunk_size)}] Scrapping...')
                 try:
                     userlist, cursor_max = action(self,user_id,follower_count,chunk_size=chunk_size,cursor=cursor,max_followers=max_followers)
+                except PleaseWaitFewMinutes as e:
+                        instalog.talk(f"Instagram says: {e}")
+                        ctimer.wait(60,120,"Cooldown")
+                        self.client.logout()
+                        self.login(disable_wait=True)
+                        continue
                 except Exception as e:
                     # If at least one chunk was retrieved, return it, and the cursor
                     if i>=1:
@@ -396,15 +423,20 @@ class Bot_Account(Base):
                     
                 # Sleep for every iteration
                 ctimer.wait(self.config_wait_range_1,self.config_wait_range_2)
-            
 
-            # Clean exceded followers
+
+            # Clear repeated followers (experimental). Time complexity: o(n)
+            final_user_list = set(final_user_list)
+            final_user_list = list(final_user_list)
+
+            # Clean exceded followers (old)
+            '''
             total = len(final_user_list)
             if total > max_followers:
                 diff = total - max_followers
                 instalog.debug(f'Cleaning exceded (removing last {str(diff)} users)')
                 del final_user_list[-diff:]
-
+            '''
             
             # Print scrapped info
             self.print_final_scrapped(final_user_list,cursor_max)

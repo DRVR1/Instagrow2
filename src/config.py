@@ -35,6 +35,11 @@ instagrow_scrapped_path = os.path.join(app_data_dir,'scrapped')
 if not os.path.exists(instagrow_scrapped_path):
     os.makedirs(instagrow_scrapped_path)
 
+# Path where the merged json's will be saved
+instagrow_merged_path = os.path.join(app_data_dir,'merged')
+if not os.path.exists(instagrow_merged_path):
+    os.makedirs(instagrow_merged_path)
+
 #Bots database path (bot_class's database)
 db_file_path = os.path.join(app_data_dir, f'{AppName}.UserData.db')
 

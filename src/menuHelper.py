@@ -143,7 +143,8 @@ class Menu_Helper():
 |-------|Actions|-------|
 10. Mass follow (must provide scrapped user list)
 11. Mass unfollow (must provide scrapped user list)
-12. Who is unfollowing me? (coming soon)\n
+12. Who is unfollowing me? (must provide scrapped followers and followings)
+13. Merge lists of followers / followings\n
 |-------|Configuration (Warning)|-------|
 99. Delete\n'''
         text9='0. Back'
@@ -313,10 +314,12 @@ Scheduler activated: {str(bot.scheduled_enabled)}
 
             savePath = filehelper.rename_file(_savePath)
 
+
             if single:
                 bot.dump_user_obj_to_json(userObj,save_path=savePath)
             else:
                 bot.dump_userList_to_json(shortlist,save_path=savePath)
+
 
             instalog.talk(f'Json saved in {savePath}\n')
             input(f'Continue')
@@ -380,15 +383,26 @@ Scheduler activated: {str(bot.scheduled_enabled)}
         filename = uname + '.FullData.' + uId + '.json'
 
         return filename
+    
 
+    def get_path_popup(self,title:str):
+        app = QApplication([])
+        file_path, _ = QFileDialog.getOpenFileName(None, title, config.instagrow_scrapped_path)
+        app.exit()
+        return file_path
+    
+    def get_paths_popup(self,title:str) -> list[str]:
+        app = QApplication([])
+        file_paths, _ = QFileDialog.getOpenFileNames(None, title, config.instagrow_scrapped_path)
+        app.exit()
+        return file_paths
 
     def _mass_wrap(func):
         '''A wrapper for mass actions'''
         @functools.wraps(func) 
         def wrapper(self:'Menu_Helper',bot:'Bot_Account',*args,**kwargs):
-            # Asks for json file
-            app = QApplication([])
-            file_path, _ = QFileDialog.getOpenFileName(None, "Select the .json user list", config.instagrow_scrapped_path)
+            # Asks for json file 
+            file_path = self.get_path_popup("Select the .json user list")
             instalog.talk(f"Selected File: {file_path}")
             # Convert json file to UserShort list
             shortList = bot.retrieve_json_UserShortList(save_path=file_path)
@@ -415,6 +429,37 @@ Scheduler activated: {str(bot.scheduled_enabled)}
         shortList = _shortlist 
         bot.unfollow_mass(shortList)
 
+
+    def compare_unfollowers(self,bot:'Bot_Account'): 
+        follower_path = self.get_path_popup("Select a FOLLOWERS list")
+        folllowing_path = self.get_path_popup("Select a FOLLOWINGS list")
+        follower_set = set(bot.retrieve_json_UserShortList(follower_path))
+        following_set = set(bot.retrieve_json_UserShortList(folllowing_path))
+        # Compare sets: 
+        unfollowers_set = following_set - follower_set
+        unfollowers_list = list(unfollowers_set)
+        for unfollower in unfollowers_list:
+            instalog.talk(f"Unfollower: @{unfollower.username} id: {unfollower.pk}")
+        instalog.talk(f"You have a total of {str(len(unfollowers_list))} unfollowers. WARNING: Data may be inaccurate. Please check before taking any actions.")
+        # Save unfollowers
+        path =  bot.username + '.unfollowers'+'.json'
+        final_path = os.path.join(config.instagrow_scrapped_path,path)
+        final_path = filehelper.rename_file(final_path)
+        bot.dump_userList_to_json(unfollowers_list,save_path=final_path)
+        instalog.talk(f"File saved in: {final_path}")
+
+
+    def merge_followers_lists(self,bot:'Bot_Account'): 
+        paths = self.get_paths_popup('Select user lists of the same type (example: two followers lists the same user)')
+        final_path = config.instagrow_merged_path +'\\'+ os.path.basename(paths[0])
+        final_path = filehelper.rename_file(final_path)
+        instalog.talk(f"Are you sure you want to merge this {str(len(paths))} lists? they won't be deleted after the process. (0 for cancel)")
+        val = self.get_input()
+        if not val: 
+            return False
+        instalog.talk("Merging...")
+        bot.merge_user_list(paths,save_path=final_path)
+        instalog.talk(f"Merged file saved in {final_path}")
 
     def bot_get_action_wait_range(self,bot:'Bot_Account') -> str:
         return f"{str(bot.config_wait_range_1)}s to {str(bot.config_wait_range_2)}s (seconds)"

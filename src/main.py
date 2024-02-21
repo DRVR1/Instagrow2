@@ -75,6 +75,14 @@ def configure_bot(bot:'Bot_Account'):
         elif op == 11:
             helper.mass_unfollow(bot)
             configure_bot(bot)
+        elif op == 12:
+            helper.compare_unfollowers(bot)
+            continue_func()
+            configure_bot(bot)
+        elif op == 13:
+            helper.merge_followers_lists(bot)
+            continue_func()
+            configure_bot(bot)
         elif op == 99:
             helper.bot_remove(bot.username)
             input('Removed. Continue')
