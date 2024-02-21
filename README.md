@@ -57,13 +57,13 @@ Example 1: i want to follow the followers of @python.hub to increase my account 
 
 # Screenshots
 
-![cli](https://i.imgur.com/lgoh0yp.png)
-![cli](https://i.imgur.com/ZV3U7ot.png)
-![cli](https://i.imgur.com/PSv2VMf.png)
+![main](https://i.imgur.com/lgoh0yp.png)
+![botconfig](https://i.imgur.com/w3iFxkB.png)
+![botstats](https://i.imgur.com/PSv2VMf.png)
 
-# Files
+# Files (user/AppData/local/instagrow2)
 
-![files](https://i.imgur.com/YYeQuTe.png)
+![files](https://i.imgur.com/4ntuqhd.png)
 
 ## Scrapped @instagram
-![scrapping](https://i.imgur.com/AK6Izqh.png)
+![scrapped](https://i.imgur.com/AK6Izqh.png)
