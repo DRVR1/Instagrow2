@@ -13,9 +13,9 @@ The misuse of this software can lead to the temporary or permanent blocking of y
 - Saves logs
 - Saves scrapped followers into json files
 - Stores and loads session data
+- List people who don't follow you back and save the list
 
 ## Coming soon:
-- List people who don't follow you back and save the list
 - Executable setup for windows
 - Compatibility with linux.
 - AutoStartup and automatic actions (no human intervention needed).
