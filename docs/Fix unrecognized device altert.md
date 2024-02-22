@@ -3,11 +3,11 @@ For this, you will have to follow a series of steps, in order to get your device
 
 ## Info you need to collect:
 
-   - user_agent (you get it from instagram app)
-   - country (two letter code)
-   - country_code (a number)
-   - locale (language)
-   - timezone_offset(you calculate it)
+   - `user_agent` (you get it from instagram app)
+   - `country` (two letter code)
+   - `country_code` (a number)
+   - `locale` (language)
+   - `timezone_offset` (you calculate it)
 
 # Collecting info
 
@@ -42,7 +42,7 @@ Convert UTC-3 to seconds (buenos aires, Argentina):
 3) So, UTC-3 is equivalent to -10800 seconds.
 
 # Final step:
-Replace the collected information in the src/default_settings.py file. Also, if you logged in before, you gonna need to delete the saved user settings, otherwise the default_settings won't be applied. This user settings will be located in C:/Users/your_username/AppData/local/instagrow2/settings
+Replace the collected information in the `src/default_settings.py` file. Also, if you logged in before, you gonna need to delete the saved user settings, otherwise the default_settings won't be applied. This user settings will be located in `C:/Users/your_username/AppData/local/instagrow2/settings`
 
 # How do i know this settings worked?
 When you log in, the unrecognized device email and notifications won't show up, decreasing your suspiciousness.
