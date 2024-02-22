@@ -35,7 +35,7 @@ Time Zone offset... what is this number?
 2) Multiply the number of hours by 3600 (the number of seconds in an hour).
 3) If it's a positive offset (e.g., UTC+3), the result will be positive. If it's a negative offset (e.g., UTC-3), the result will be negative.
 
-## Example: 
+### Example: 
 Convert UTC-3 to seconds (buenos aires, Argentina):
 1) UTC offset: -3 hours 
 2) -3 hours * 3600 seconds/hour = -10800 seconds
