@@ -9,24 +9,11 @@ Description:
 
 class default():
 
-    device_settings={
-            "app_version": "318.0.0.30.110",
-            "android_version": 34,
-            "android_release": "14.0.0",
-            "dpi": "450dpi",
-            "resolution": "1080x2185",
-            "manufacturer": "samsung",
-            "device": "Galaxy A33 5G",
-            "model": "SM-A336M",
-            "cpu": "arm64-v8a",
-            "version_code": "A336MUBS7DXA1"
-            }
+    user_agent = "Instagram 287.0.0.25.77 Android (33/13; 420dpi; 2048x2048; samsung; SM-A336M; a33x; s5e8825; en_US; 483850187)"
     
-    user_agent = "Instagram 318.0.0.30.110 Android (34/14.0.0; 450dpi; 1080x2185; samsung; Galaxy A33 5G; SM-A336M; arm64-v8a; en_US; A336MUBS7DXA1)"
+    country = "AR"
     
-    country = "US"
-    
-    country_code = 1
+    country_code = 54
     
     locale = "en_US"
     

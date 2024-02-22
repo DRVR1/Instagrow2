@@ -461,6 +461,7 @@ Scheduler activated: {str(bot.scheduled_enabled)}
         bot.merge_user_list(paths,save_path=final_path)
         instalog.talk(f"Merged file saved in {final_path}")
 
+
     def bot_get_action_wait_range(self,bot:'Bot_Account') -> str:
         return f"{str(bot.config_wait_range_1)}s to {str(bot.config_wait_range_2)}s (seconds)"
     

@@ -424,19 +424,9 @@ class Bot_Account(Base):
                 # Sleep for every iteration
                 ctimer.wait(self.config_wait_range_1,self.config_wait_range_2)
 
-
             # Clear repeated followers (experimental). Time complexity: o(n)
             final_user_list = set(final_user_list)
             final_user_list = list(final_user_list)
-
-            # Clean exceded followers (old)
-            '''
-            total = len(final_user_list)
-            if total > max_followers:
-                diff = total - max_followers
-                instalog.debug(f'Cleaning exceded (removing last {str(diff)} users)')
-                del final_user_list[-diff:]
-            '''
             
             # Print scrapped info
             self.print_final_scrapped(final_user_list,cursor_max)
@@ -584,7 +574,7 @@ class Bot_Account(Base):
         old_android_device_id = self.client.android_device_id
         old_request_id = self.client.request_id
         old_tray_session_id = self.client.tray_session_id
-        device = default.device_settings
+
         agent = default.user_agent
         country = default.country
         country_code = default.country_code
@@ -593,7 +583,6 @@ class Bot_Account(Base):
 
         self.client.set_settings({})
 
-        self.client.device_settings = device
         self.client.user_agent = agent
         self.client.country = country
         self.client.country_code = country_code
