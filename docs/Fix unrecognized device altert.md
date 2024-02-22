@@ -1,5 +1,8 @@
-A good safety measure is to tell instagram you are using a KNOWN device, to reduce suspicious activity. For example, your phone that you have been using the last year to log in into your @account.
-For this, you will have to follow a series of steps, in order to get your device information, and replace it in the file  "default_settings.py"
+# How to tell instagram we are logging from a known device (when we are not)
+
+A good safety measure is to tell instagram you are using a KNOWN device, to reduce suspicious activity. For example, you have a phone, that you have been using the last year to log in into your @account. If suddenly you login from another device, and start scrapping data, it would stand out.
+
+To fix this, you will have to follow a series of steps, in order to get your device information, and replace it in the file  "default_settings.py"
 
 ## Info you need to collect:
 
