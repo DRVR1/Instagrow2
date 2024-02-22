@@ -44,7 +44,12 @@ What safety measures you take, depends on your usecase. This app is configured b
 
 ## How to use
 
-### To start, run > python main.py
+Having python3 installed and the console opened in the project folder:
+
+`pip install -r requirements.txt'
+`python main.py`
+
+(Please install the requirements from the file, this app uses forks)
 
 Example 1: i want to follow the followers of @python.hub to increase my account visibility (beacuse i make python posts too)
 
