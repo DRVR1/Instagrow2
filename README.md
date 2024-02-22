@@ -4,9 +4,9 @@
 Computer software, that automatically logs in your instagram account, and performs a defined number of actions per day, increasing your account visibility. 
 
 ## Warning:
-By using this software, you are breaking the instagram's [terms of use](https://help.instagram.com/581066165581870).
-The misuse of this software can lead to the temporary or permanent blocking of your instagram account. Please use it carefully and read the documentation. 
-Remember that instagram implements powerful algorithms and artificial intelligence to detect whether requests to it are made by human users or by automated tools. Once it detects suspicious behaviors and patterns, it imposes a block, temporary at best or permanent at worst. The responsability is yours.
+By using this software, you are breaking the instagram's [terms of use](https://help.instagram.com/581066165581870).<br>
+The misuse of this software can lead to the temporary or permanent blocking of your instagram account. Please use it carefully and read the documentation.<br>
+Remember that instagram implements powerful algorithms and artificial intelligence to detect whether requests to it are made by human users or by automated tools. Once it detects suspicious behaviors and patterns, it imposes a block, temporary at best or permanent at worst.<br>The responsability is yours.
 
 ## Features:
 - Mass follow / unfollow instagram accounts.
