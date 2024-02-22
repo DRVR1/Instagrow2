@@ -24,12 +24,13 @@ Example:
     
     locale = "en_US"
 
-Time Zone offset... what is this number?
-    
-    timezone_offset= -10800
 
 ## Step 3: Timezone offset
 
+Time Zone offset... what is this number?
+    
+    timezone_offset= -10800
+    
 1) Start with the UTC offset in hours.
 2) Multiply the number of hours by 3600 (the number of seconds in an hour).
 3) If it's a positive offset (e.g., UTC+3), the result will be positive. If it's a negative offset (e.g., UTC-3), the result will be negative.
