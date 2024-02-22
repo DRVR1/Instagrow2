@@ -21,8 +21,8 @@ You can retrieve the user agent from the `device information` provided by instag
 An user agent looks like this:
 `Instagram 304.0.0.35.106 Android (33/13; 420dpi; 1080x2194; samsung; SM-A336M; a33x; s5e8825; en_US; 525085885)`
 
-How to download this data?
-https://help.instagram.com/181231772500920
+[How to download this data?](https://help.instagram.com/181231772500920)
+
 
 ## Step 2: Country, code and locale
 
