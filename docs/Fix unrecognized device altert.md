@@ -12,7 +12,13 @@ For this, you will have to follow a series of steps, in order to get your device
 # Collecting info
 
 ## step 1: user_agent 
-You can retrieve the user agent from the instagram/meta settings by downloading your personal information. (by law, instagram must provide it to you.)
+Request instagram to generate a file with your personal data (by [law](https://gdprinfo.eu/en-article-15), instagram must provide it to you). This data will include a file with all the user agents of your known devices. After you downloaded your personal data (remember to include `device information` when selecting what to download).
+You can retrieve the user agent from the `device information` provided by instagram/meta.
+
+An user agent looks like this:
+`Instagram 304.0.0.35.106 Android (33/13; 420dpi; 1080x2194; samsung; SM-A336M; a33x; s5e8825; en_US; 525085885)`
+
+https://help.instagram.com/181231772500920
 
 ## Step 2: Country, code and locale
 
