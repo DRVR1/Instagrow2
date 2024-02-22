@@ -31,12 +31,12 @@ The misuse of this software can lead to the temporary or permanent blocking of y
 
 ## Safety measures (avoid banning/shadowbanning/thortling)
 - Verifying your @account with a phone number
-- Not using a cheap or a free proxy
+- Not using a cheap or a free proxy (proxy support coming soon)
 - Using an old account
-- Waiting a reasonable time between following/posting/etc
-- Loging in with a sessionID
-- Changing the file ./src/default_settings.py" with your own device settings (more info in ./examples)
-- Not scrapping foreign info 
+- Waiting a reasonable time between following/posting/etc (automatic and configurable)
+- Loging in with a sessionID (automatic)
+- [Use a recognized device](https://github.com/DRVR1/Instagrow2/blob/main/docs/Fix%20unrecognized%20device%20altert.md)
+- Not scrapping foreign info
 
 What safety measures you take, depends on your usecase. This app is configured by default with the safests measures, according to the [instagrapi documentation](https://subzeroid.github.io/instagrapi/usage-guide/best-practices.html), also your sessionID will be automatically saved.
 
