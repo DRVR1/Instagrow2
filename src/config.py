@@ -12,18 +12,27 @@ Description:
 # Default modules
 import os
 import sys
+import platform
 
 debug_mode = False
 
 #===============|String Values|================:
 AppName = 'InstaGrow2'
-AppVersion = 'pre-alpha'
+AppVersion = '0.1'
 AutoRun_Script_Name = 'InstaGrow2.bat'
 instagrapi_settings_name='settings.json'
-icon_path = "icon.ico"
 
-##===============|WINDOWS PATHS|================:
-app_data_dir = os.path.join(os.path.expanduser('~'), 'AppData', 'Local', AppName)
+
+##===============|PATHS|================:
+app_data_dir = ''
+
+if platform.system() == 'Windows':
+    app_data_dir = os.path.join(os.path.expanduser('~'), 'AppData', 'Local', AppName)
+elif platform.system() == 'Linux':
+    app_data_dir = os.path.join(os.path.expanduser("~"), ".local", "share", AppName)
+else:
+    app_data_dir = AppName+'_appData'
+
 if not os.path.exists(app_data_dir):
     os.makedirs(app_data_dir)
 

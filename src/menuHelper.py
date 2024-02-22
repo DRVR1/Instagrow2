@@ -9,6 +9,7 @@ Description:
 # Default modules
 import os
 import sys
+import json
 
 # Custom modules
 import config
@@ -18,7 +19,6 @@ import filehelper
 import art
 
 # Downloaded modules
-import json
 from PyQt5.QtWidgets import QApplication, QFileDialog
 
 class Menu_Helper():

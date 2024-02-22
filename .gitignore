@@ -1,2 +1,5 @@
 
 *.pyc
+InstaGrow2.spec
+*.exe
+res/setup_script.iss
