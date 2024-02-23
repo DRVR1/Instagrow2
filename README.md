@@ -20,6 +20,7 @@ Remember that instagram implements powerful algorithms and artificial intelligen
 
 ## Coming soon
 - Compatibility with linux.
+- Human mimic
 - AutoStartup and automatic actions (no human intervention needed).
 - Automatic content posting (posts, comments, likes, histories).
 - Enable proxy settings
