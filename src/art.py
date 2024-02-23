@@ -2,7 +2,7 @@
 Author: ian vidmar
 
 Description:
-    Ascii art.
+    Ascii art
 '''
 
 app_title='''
