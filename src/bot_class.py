@@ -156,8 +156,11 @@ class Bot_Account(Base):
         '''
         for user in accounts:
             followed = self.follow(user_id=user.pk)
-            if not followed:
+
+            if followed == None:
                 pass
+            elif followed == False:
+                return False
             
 
     def unfollow_mass(self,accounts:list[Union[User,UserShort]])->bool:
@@ -170,8 +173,11 @@ class Bot_Account(Base):
         '''
         for user in accounts:
             unfollowed = self.unfollow(user_id=user.pk)
-            if not unfollowed:
+
+            if unfollowed == None:
                 pass
+            elif unfollowed == False:
+                return False
 
 
     def _dump_json_wrap(action):

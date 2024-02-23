@@ -24,7 +24,7 @@ def PleaseWaitFewMinutes(bot_object,exception):
 
 
 def ChallengeRequired(bot_object,exception):
-    instalog.error(f'i. Handled exception: {exception}\ni. Solution: login and solve the captcha.)')
+    instalog.error(f'i. Handled exception: {exception}\ni. Solution: login and solve the captcha.')
     bot_object.client.logout()
     return False
 
