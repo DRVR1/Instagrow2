@@ -16,9 +16,9 @@ Remember that instagram implements powerful algorithms and artificial intelligen
 - Saves scrapped followers into json files
 - Stores and loads session data
 - List people who don't follow you back and save the list
+- Executable setup for windows
 
 ## Coming soon
-- Executable setup for windows
 - Compatibility with linux.
 - AutoStartup and automatic actions (no human intervention needed).
 - Automatic content posting (posts, comments, likes, histories).
