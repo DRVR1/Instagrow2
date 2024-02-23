@@ -24,13 +24,6 @@ Remember that instagram implements powerful algorithms and artificial intelligen
 - Automatic content posting (posts, comments, likes, histories).
 - Enable proxy settings
 
-## Requirements
-- python3
-
-- PyQt5
-- sqlalchemy
-- instagrapi
-
 ## Safety measures (avoid banning/shadowbanning/thortling)
 - Verifying your @account with a phone number
 - Not using a cheap or a free proxy (proxy support coming soon)
