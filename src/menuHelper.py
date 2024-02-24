@@ -44,7 +44,7 @@ class Menu_Helper():
         '''A wrapper that clears the console before every menu section'''
         @functools.wraps(func) 
         def wrapper(self:'Menu_Helper',*args,**kwargs):
-            os.system("cls")
+            os.system(config.console_clear_command)
             return func(self,*args,**kwargs)
         return wrapper
     
@@ -233,7 +233,7 @@ Scheduler activated: {str(bot.scheduled_enabled)}
 
     def _scrapper_login_handler(self,bot:'Bot_Account', single):
         '''Login and select target user'''
-        os.system("cls")        
+        os.system(config.console_clear_command)        
         print("WARNING: It's not recomended to scrape foreign data with your personal account (can get you banned). Please use a trash account.\n")
         
         max = None
@@ -270,7 +270,10 @@ Scheduler activated: {str(bot.scheduled_enabled)}
             single = kwargs.get('single')
 
             # Login and ask the user max ammount of users, and target user
-            max_followers, uname, input_cursor = self._scrapper_login_handler(bot,single)
+            result =  self._scrapper_login_handler(bot,single)
+            if not result:
+                return False
+            max_followers, uname, input_cursor = result
 
             # Get target user object
             instalog.talk('Getting user object...')

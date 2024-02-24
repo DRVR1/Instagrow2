@@ -22,16 +22,20 @@ AppVersion = '0.1'
 AutoRun_Script_Name = 'InstaGrow2.bat'
 instagrapi_settings_name='settings.json'
 
+console_clear_command = ''
 
 ##===============|PATHS|================:
 app_data_dir = ''
 
 if platform.system() == 'Windows':
     app_data_dir = os.path.join(os.path.expanduser('~'), 'AppData', 'Local', AppName)
+    console_clear_command = 'cls'
 elif platform.system() == 'Linux':
     app_data_dir = os.path.join(os.path.expanduser("~"), ".local", "share", AppName)
+    console_clear_command = 'clear'
 else:
     app_data_dir = AppName+'_appData'
+    console_clear_command = 'clear'
 
 if not os.path.exists(app_data_dir):
     os.makedirs(app_data_dir)

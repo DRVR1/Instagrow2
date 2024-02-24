@@ -1,5 +1,5 @@
 #Description
-#This script will use pyInstaller and Inno Setup Compiler to create an installation file for the software.
+#This script will use pyInstaller and Inno Setup Compiler to create an installation file for the software (windows only).
 #Both pyinstaller and Inno, are required in order to run this script. 
 #output: an executable file for the program, and an installer.
 

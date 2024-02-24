@@ -72,4 +72,5 @@ def wait(time:float,time2:float,comment:str=False) -> None:
 
     instalog.talk(txt)        
     
-    sleep(float(time))
+    # The instagrapi client overrides this function
+    #sleep(float(time))

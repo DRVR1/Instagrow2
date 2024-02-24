@@ -161,7 +161,6 @@ class Bot_Account(Base):
                 pass
             elif followed == False:
                 return False
-            
 
     def unfollow_mass(self,accounts:list[Union[User,UserShort]])->bool:
         '''
@@ -610,12 +609,15 @@ class Bot_Account(Base):
             - Attempts to login to Instagram using either the provided session information
               or the provided username and password.
         """
-
+        # Create client
         if not hasattr(self,"client"):
             self._startClient()
         else:
             if self.check_login():
                 return True
+            
+        # Set delay for the client
+        self.client.delay_range = [self.config_wait_range_1,self.config_wait_range_2]
             
         instalog.talk(f'Trying to login into {self.username}')
 
