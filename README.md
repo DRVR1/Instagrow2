@@ -21,6 +21,7 @@ Remember that instagram implements powerful algorithms and artificial intelligen
 
 ## Coming soon
 - Human-like behavior
+- Edit the bot's user agent
 - AutoStartup and automatic actions (no human intervention needed).
 - Automatic content posting (posts, comments, likes, histories).
 - Enable proxy settings
