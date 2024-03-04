@@ -20,7 +20,6 @@ Remember that instagram implements powerful algorithms and artificial intelligen
 - Compatibility with linux.
 
 ## Coming soon
-- Simulate human behavior and  mobile app requests in order to avoid blocking (currently working on this)
 - Add an option to edit the bot's user agent
 - Add an option to configure a proxy for the bot
 - AutoStartup and automatic actions (no human intervention needed).
