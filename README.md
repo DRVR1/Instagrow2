@@ -8,7 +8,7 @@ By using this software, you are breaking the instagram's [terms of use](https://
 The misuse of this software can lead to the temporary or permanent blocking of your instagram account. Please use it carefully and read the documentation.<br>
 Remember that instagram implements powerful algorithms and artificial intelligence to detect whether requests to it are made by human users or by automated tools. Once it detects suspicious behaviors and patterns, it imposes a block, temporary at best or permanent at worst.<br>The responsability is yours.
 
-⚠️ This version does not support advanced human behavior techniques. For this reason, you have higher chances of being detected. A premium version of this software is under development, wich will cover this feature and much more.⚠️
+⚠️ This version does not support advanced human behavior techniques. For this reason, you have higher chances of being detected. A premium version of this software is under development, which will cover this feature and much more.⚠️
  
 ## Features
 - Mass follow / unfollow instagram accounts.
