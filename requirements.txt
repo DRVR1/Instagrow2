@@ -1,4 +1,4 @@
-PyQt5==5.15.10
-SQLAlchemy==2.0.9
+PyQt5
+SQLAlchemy
 instagrapi
 pillow
